@@ -3,7 +3,6 @@ import SwiftUI
 struct LoginView: View {
     @EnvironmentObject var roomViewModel: RoomViewModel
     @State private var playerName: String = ""
-    @State private var isHost: Bool = false
     @State private var roomId: String = ""
     @State private var showRoomIdInput: Bool = false
     
@@ -13,36 +12,60 @@ struct LoginView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
             
-            Picker("选择身份", selection: $isHost) {
-                Text("普通玩家").tag(false)
-                Text("房主").tag(true)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
-            
-            if !isHost && showRoomIdInput {
+            if showRoomIdInput {
                 TextField("输入房间ID", text: $roomId)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
             }
             
-            Button(action: {
-                if !playerName.isEmpty {
-                    roomViewModel.createPlayer(name: playerName, isHost: isHost)
-                    if !isHost {
-                        showRoomIdInput = true
+            HStack(spacing: 20) {
+                Button(action: {
+                    if !playerName.isEmpty {
+                        roomViewModel.createPlayer(name: playerName, isHost: true)
                     }
+                }) {
+                    Text("创建房间")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
-            }) {
-                Text(isHost ? "创建房间" : "加入房间")
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                
+                joinRoomButton
             }
             .padding()
         }
         .padding()
+        .alert("加入房间失败", isPresented: $roomViewModel.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(roomViewModel.errorMessage)
+        }
     }
+    
+    var joinRoomButton: some View {
+        Button(action: {
+            if !playerName.isEmpty {
+                roomViewModel.createPlayer(name: playerName, isHost: false)
+                showRoomIdInput = true
+                if !roomId.isEmpty {
+                    roomViewModel.joinRoom(roomId: roomId)
+                }
+            }
+        }) {
+            Text("加入房间")
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+        }
+    }
+}
+
+#Preview {
+    LoginView()
+        .environmentObject(RoomViewModel())
+        .environmentObject(GameViewModel())
 } 

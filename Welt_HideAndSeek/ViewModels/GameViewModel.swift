@@ -1,7 +1,15 @@
+import Foundation
+import CoreLocation
+import SwiftUI
+
 class GameViewModel: ObservableObject {
     @Published var playerLocations: [String: CLLocationCoordinate2D] = [:]
     @Published var gameTimeRemaining: TimeInterval = 0
     @Published var gameStatus: GameStatus = .waiting
+    @Published var gameResult: GameResult?
+    @Published var caughtPlayers: Set<String> = []
+    @Published var showResult: Bool = false
+    @Published var error: Error?
     
     private let catchDistance: Double = 5.0
     
@@ -9,6 +17,38 @@ class GameViewModel: ObservableObject {
         case waiting
         case playing
         case finished
+    }
+    
+    enum GameResult {
+        case seekerWin
+        case runnerWin
+    }
+    
+    func resetGame() {
+        playerLocations.removeAll()
+        gameTimeRemaining = 0
+        gameStatus = .waiting
+        gameResult = nil
+        caughtPlayers.removeAll()
+        showResult = false
+    }
+    
+    private func checkGameEnd() {
+        // 检查游戏是否结束
+        let allRunnersCaught = caughtPlayers.count >= (playerLocations.count - 1) // 除了抓捕者外都被抓
+        
+        if allRunnersCaught {
+            gameResult = .seekerWin
+            endGame()
+        } else if gameTimeRemaining <= 0 {
+            gameResult = .runnerWin
+            endGame()
+        }
+    }
+    
+    private func endGame() {
+        gameStatus = .finished
+        showResult = true
     }
     
     func updateLocation(playerId: String, location: CLLocationCoordinate2D) {
@@ -36,7 +76,8 @@ class GameViewModel: ObservableObject {
     }
     
     private func handleCatch(seekerId: String, runnerId: String) {
-        // 处理抓捕逻辑
+        caughtPlayers.insert(runnerId)
+        checkGameEnd()
     }
     
     func startGameTimer(duration: TimeInterval) {
@@ -56,10 +97,6 @@ class GameViewModel: ObservableObject {
                 self.endGame()
             }
         }
-    }
-    
-    private func endGame() {
-        gameStatus = .finished
     }
     
     func getVisibleLocations(for playerId: String) -> [String: CLLocationCoordinate2D] {

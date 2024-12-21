@@ -15,9 +15,23 @@ struct Welt_HideAndSeekApp: App {
     
     var body: some Scene {
         WindowGroup {
-            LoginView()
-                .environmentObject(roomViewModel)
-                .environmentObject(gameViewModel)
+            NavigationStack {
+                LoginView()
+                    .navigationDestination(isPresented: .constant(roomViewModel.currentRoom != nil)) {
+                        Group {
+                            if roomViewModel.checkGameStatus() {
+                                GameView()
+                                    .sheet(isPresented: $gameViewModel.showResult) {
+                                        ResultView()
+                                    }
+                            } else {
+                                RoomView()
+                            }
+                        }
+                    }
+            }
+            .environmentObject(roomViewModel)
+            .environmentObject(gameViewModel)
         }
     }
 }

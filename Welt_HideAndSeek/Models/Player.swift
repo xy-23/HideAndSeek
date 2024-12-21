@@ -1,3 +1,6 @@
+import Foundation
+import CoreLocation
+
 struct Player: Identifiable, Equatable {
     let id: String = UUID().uuidString
     var name: String

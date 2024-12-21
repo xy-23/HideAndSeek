@@ -1,3 +1,5 @@
+import Foundation
+
 struct Room: Identifiable {
     let id: String
     var host: Player
