@@ -41,15 +41,18 @@ class GameViewModel: ObservableObject {
         
         if allRunnersCaught {
             gameResult = .seekerWin
-            endGame()
+            endGame(runnersWin: false)
         } else if gameTimeRemaining <= 0 {
             gameResult = .runnerWin
-            endGame()
+            endGame(runnersWin: true)
         }
     }
     
-    private func endGame() {
+    private func endGame(runnersWin: Bool) {
+        gameTimer?.invalidate()
+        gameTimer = nil
         gameStatus = .finished
+        gameResult = runnersWin ? .runnerWin : .seekerWin
         showResult = true
     }
     
