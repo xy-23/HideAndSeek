@@ -164,11 +164,6 @@ class RoomViewModel: ObservableObject {
         }
     }
     
-    func updateGameSettings(maxPlayers: Int, duration: TimeInterval) {
-        currentRoom?.maxPlayers = maxPlayers
-        currentRoom?.gameDuration = duration
-    }
-    
     func startGame() {
         guard canStartGame() else { return }
         
