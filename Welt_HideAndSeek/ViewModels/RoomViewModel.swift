@@ -11,8 +11,11 @@ class RoomViewModel: ObservableObject {
     @Published var showError: Bool = false
     
     private let networkManager = NetworkManager()
+    @ObservedObject var gameViewModel: GameViewModel
     
-    init() {
+    init(gameViewModel: GameViewModel) {
+        self.gameViewModel = gameViewModel
+        
         // 添加房间更新通知监听
         NotificationCenter.default.addObserver(
             self,
