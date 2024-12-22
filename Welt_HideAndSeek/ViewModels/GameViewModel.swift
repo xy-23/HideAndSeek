@@ -9,6 +9,9 @@ class GameViewModel: ObservableObject {
     @Published var gameResult: GameResult?
     @Published var caughtPlayers: Set<String> = []
     @Published var showResult: Bool = false
+    @Published var currentPlayers: [Player] = []
+
+    private var gameTimer: Timer?
 
     private let catchDistance: Double = 5.0
     
@@ -79,11 +82,14 @@ class GameViewModel: ObservableObject {
         checkGameEnd()
     }
     
-    func startGameTimer(duration: TimeInterval) {
+    func startGame(duration: TimeInterval, players: [Player]) {
         gameTimeRemaining = duration
         gameStatus = .playing
+        currentPlayers = players
+        caughtPlayers.removeAll()
+        playerLocations.removeAll()
         
-        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             guard let self = self else {
                 timer.invalidate()
                 return
@@ -91,9 +97,9 @@ class GameViewModel: ObservableObject {
             
             if self.gameTimeRemaining > 0 {
                 self.gameTimeRemaining -= 1
+                self.checkGameEnd()
             } else {
-                timer.invalidate()
-                self.endGame()
+                self.endGame(runnersWin: true)
             }
         }
     }

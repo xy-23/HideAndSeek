@@ -48,19 +48,7 @@ struct GameView: View {
                 
                 // 玩家角色信息
                 if let currentPlayer = roomViewModel.currentPlayer {
-                    HStack {
-                        Image(systemName: currentPlayer.role == .seeker ? "eye.fill" : "figure.run")
-                            .foregroundColor(currentPlayer.role == .seeker ? .red : .green)
-                        Text(currentPlayer.role == .seeker ? "抓捕者" : "逃跑者")
-                            .bold()
-                    }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.white.opacity(0.9))
-                            .shadow(radius: 5)
-                    )
-                    .padding()
+                    PlayerRoleTag(player: currentPlayer)
                 }
             }
         }
@@ -98,16 +86,16 @@ struct GameView: View {
     
     // 获取玩家标注
     private func getPlayerAnnotations() -> [PlayerAnnotation] {
-        return roomViewModel.players.compactMap { player in
+        roomViewModel.players.compactMap { player in
             guard let location = gameViewModel.playerLocations[player.id] else { return nil }
             
             let color: Color
             if player.role == .seeker {
-                color = .red  // 抓捕者显示红色
+                color = .red  // 追捕者显示红色
             } else if gameViewModel.caughtPlayers.contains(player.id) {
                 color = .gray // 已被抓显示灰色
             } else {
-                color = .blue // 未被抓的逃跑者显示蓝色
+                color = .green // 逃跑者显示绿色
             }
             
             return PlayerAnnotation(
@@ -124,6 +112,52 @@ struct GameView: View {
         let minutes = seconds / 60
         let remainingSeconds = seconds % 60
         return String(format: "%02d:%02d", minutes, remainingSeconds)
+    }
+    
+    // 玩家角色标签
+    private func PlayerRoleTag(player: Player) -> some View {
+        HStack {
+            Image(systemName: getRoleIcon(player))
+                .foregroundColor(getRoleColor(player))
+            Text(getRoleText(player))
+                .bold()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 15)
+                .fill(Color.white.opacity(0.9))
+                .shadow(radius: 5)
+        )
+    }
+    
+    private func getRoleIcon(_ player: Player) -> String {
+        if player.role == .seeker {
+            return "eye.fill"
+        } else if gameViewModel.caughtPlayers.contains(player.id) {
+            return "xmark.circle.fill"
+        } else {
+            return "figure.run"
+        }
+    }
+    
+    private func getRoleColor(_ player: Player) -> Color {
+        if player.role == .seeker {
+            return .red
+        } else if gameViewModel.caughtPlayers.contains(player.id) {
+            return .gray
+        } else {
+            return .green
+        }
+    }
+    
+    private func getRoleText(_ player: Player) -> String {
+        if player.role == .seeker {
+            return "追捕者"
+        } else if gameViewModel.caughtPlayers.contains(player.id) {
+            return "已被抓获"
+        } else {
+            return "逃跑者"
+        }
     }
 }
 

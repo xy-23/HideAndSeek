@@ -142,7 +142,7 @@ class RoomViewModel: ObservableObject {
                 networkManager.updateRoom(updatedRoom)
             }
             
-            // 清理房间相关信息，保��玩家基本信息
+            // 清理房间相关信息，保留玩家基本信息
             currentRoom = nil
             roomId = ""
             // 重置玩家角色为默认值
@@ -166,23 +166,25 @@ class RoomViewModel: ObservableObject {
     
     func startGame() {
         guard canStartGame() else { return }
+        guard let room = currentRoom else { return }
         
-        // 更新房间状态为游戏中
+        // 更新房间状态
         currentRoom?.gameStatus = .playing
         
         // 分配角色
         assignPlayerRoles()
         
-        // 更新网络管理器中的房间状态
-        if let room = currentRoom {
-            var updatedRoom = room
-            updatedRoom.gameStatus = .playing
-            updatedRoom.players = players
-            networkManager.updateRoom(updatedRoom)
-            
-            // 更新本地状态
-            currentRoom = updatedRoom
-        }
+        // 启动游戏，传递房间设置
+        gameViewModel.startGame(
+            duration: room.gameDuration,
+            players: players
+        )
+        
+        // 更新网络状态
+        var updatedRoom = room
+        updatedRoom.gameStatus = .playing
+        updatedRoom.players = players
+        networkManager.updateRoom(updatedRoom)
     }
     
     func endGame() {

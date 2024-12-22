@@ -22,7 +22,7 @@ struct ResultView: View {
                         .font(.system(size: 60))
                         .foregroundColor(gameViewModel.gameResult == .seekerWin ? .red : .green)
                     
-                    Text(gameViewModel.gameResult == .seekerWin ? "抓捕者胜利！" : "逃跑者胜利！")
+                    Text(gameViewModel.gameResult == .seekerWin ? "追捕者胜利！" : "逃跑者胜利！")
                         .font(.title)
                         .bold()
                         .foregroundColor(.primary)
@@ -39,7 +39,7 @@ struct ResultView: View {
                     StatisticRow(
                         icon: "clock.fill",
                         title: "游戏时长",
-                        value: "\(Int(gameViewModel.gameTimeRemaining))秒",
+                        value: formatTime(Int(gameViewModel.gameTimeRemaining)),
                         color: .blue
                     )
                     
@@ -53,7 +53,7 @@ struct ResultView: View {
                     StatisticRow(
                         icon: "person.fill.checkmark",
                         title: "存活玩家",
-                        value: "\(roomViewModel.players.count - gameViewModel.caughtPlayers.count)人",
+                        value: "\(roomViewModel.players.count - gameVieqqwModel.caughtPlayers.count)人",
                         color: .green
                     )
                 }
@@ -66,7 +66,6 @@ struct ResultView: View {
                 
                 // 返回按钮
                 Button(action: {
-                    // 重置游戏状态
                     gameViewModel.resetGame()
                     roomViewModel.currentRoom?.gameStatus = .waiting
                     dismiss()
@@ -89,6 +88,13 @@ struct ResultView: View {
             }
             .padding()
         }
+    }
+    
+    // 格式化时间
+    private func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
 
