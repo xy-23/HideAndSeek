@@ -39,7 +39,6 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
-                .disabled(playerName.isEmpty)
                 
                 // 加入游戏按钮
                 Button(action: {
@@ -56,7 +55,6 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
-                .disabled(playerName.isEmpty)
             }
             .padding()
             
