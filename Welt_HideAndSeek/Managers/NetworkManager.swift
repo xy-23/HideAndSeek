@@ -72,7 +72,7 @@ class NetworkManager: ObservableObject {
     
     // 查找房间
     func findRoom(roomId: String) -> Room? {
-        return mockRooms.first { room in room.id == roomId:roomId }
+        return mockRooms.first { room in room.id == roomId }
     }
     
     // 验证房间状态
