@@ -198,6 +198,6 @@ struct PlayerLocationMarker: View {
 
 #Preview {
     GameView()
-        .environmentObject(RoomViewModel())
         .environmentObject(GameViewModel())
+        .environmentObject(RoomViewModel(gameViewModel: GameViewModel()))
 } 

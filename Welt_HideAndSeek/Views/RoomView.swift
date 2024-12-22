@@ -202,6 +202,6 @@ struct PlayerControlsView: View {
 
 #Preview {
     RoomView()
-        .environmentObject(RoomViewModel())
         .environmentObject(GameViewModel())
+        .environmentObject(RoomViewModel(gameViewModel: GameViewModel()))
 } 

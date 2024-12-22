@@ -309,6 +309,6 @@ struct JoinGameDialogView: View {
 
 #Preview {
     LoginView()
-        .environmentObject(RoomViewModel())
         .environmentObject(GameViewModel())
+        .environmentObject(RoomViewModel(gameViewModel: GameViewModel()))
 } 
