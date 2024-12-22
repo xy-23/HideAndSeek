@@ -31,30 +31,45 @@ struct GameView: View {
                 
                 // 游戏信息覆盖层
                 VStack {
-                    // 计时器卡片
-                    HStack {
-                        // 添加返回按钮
-                        Button(action: {
-                            // 返回房间
-                            roomViewModel.currentRoom?.gameStatus = .waiting
-                        }) {
-                            Image(systemName: "chevron.left")
+                    // 顶部信息栏
+                    HStack(spacing: 15) {
+                        // 返回按钮和计时器卡片
+                        HStack {
+                            Button(action: {
+                                roomViewModel.currentRoom?.gameStatus = .waiting
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(.blue)
+                                    .imageScale(.large)
+                            }
+                            .padding(.trailing)
+                            
+                            Image(systemName: "clock.fill")
                                 .foregroundColor(.blue)
-                                .imageScale(.large)
+                            Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
+                                .bold()
                         }
-                        .padding(.trailing)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.white.opacity(0.9))
+                                .shadow(radius: 5)
+                        )
                         
-                        Image(systemName: "clock.fill")
-                            .foregroundColor(.blue)
-                        Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
-                            .bold()
+                        // 新增：玩家状态卡片
+                        HStack {
+                            Image(systemName: "person.2.fill")
+                                .foregroundColor(.blue)
+                            Text("\(gameViewModel.caughtPlayers.count)/\(getRunnersCount())已抓获")
+                                .bold()
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.white.opacity(0.9))
+                                .shadow(radius: 5)
+                        )
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.white.opacity(0.9))
-                            .shadow(radius: 5)
-                    )
                     .padding()
                     
                     Spacer()
@@ -166,6 +181,11 @@ struct GameView: View {
                 return ("figure.run", .green, "逃跑者")
             }
         }
+    }
+    
+    // 新增：获取逃跑者总数的方法
+    private func getRunnersCount() -> Int {
+        return gameViewModel.currentPlayers.filter { $0.role == .runner }.count
     }
 }
 

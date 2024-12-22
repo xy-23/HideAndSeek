@@ -217,10 +217,10 @@ struct CreateGameDialog: View {
                         .foregroundColor(.blue)
                 }
                 
-                Slider(value: $gameDuration, in: 3...10, step: 1)
+                Slider(value: $gameDuration, in: 1...30, step: 1)
                     .accentColor(.blue)
                 
-                Text("建议3-10分钟，时间越长躲藏范围越大")
+                Text("可设置1-30分钟，时间越长躲藏范围越大")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
