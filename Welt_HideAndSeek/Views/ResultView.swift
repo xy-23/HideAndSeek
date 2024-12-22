@@ -5,6 +5,13 @@ struct ResultView: View {
     @EnvironmentObject var roomViewModel: RoomViewModel
     @Environment(\.dismiss) private var dismiss
     
+    // 添加格式化时间方法
+    private func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
+    }
+    
     var body: some View {
         ZStack {
             // 背景渐变
