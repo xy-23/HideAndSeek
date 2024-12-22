@@ -9,8 +9,7 @@ class GameViewModel: ObservableObject {
     @Published var gameResult: GameResult?
     @Published var caughtPlayers: Set<String> = []
     @Published var showResult: Bool = false
-    @Published var error: Error?
-    
+
     private let catchDistance: Double = 5.0
     
     enum GameStatus {
@@ -97,9 +96,5 @@ class GameViewModel: ObservableObject {
                 self.endGame()
             }
         }
-    }
-    
-    func getVisibleLocations(for playerId: String) -> [String: CLLocationCoordinate2D] {
-        return playerLocations
     }
 } 

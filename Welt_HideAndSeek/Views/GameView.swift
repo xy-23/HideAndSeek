@@ -16,8 +16,16 @@ struct GameView: View {
             // 地图视图
             Map(coordinateRegion: $region,
                 showsUserLocation: true,
-                userTrackingMode: .constant(.follow))
-                .edgesIgnoringSafeArea(.all)
+                userTrackingMode: .constant(.follow),
+                annotationItems: getPlayerAnnotations()) { annotation in
+                    MapAnnotation(coordinate: annotation.location) {
+                        PlayerLocationMarker(
+                            playerName: annotation.name,
+                            color: annotation.color
+                        )
+                    }
+            }
+            .edgesIgnoringSafeArea(.all)
             
             // 游戏信息覆盖层
             VStack {
@@ -88,11 +96,69 @@ struct GameView: View {
         }
     }
     
+    // 获取玩家标注
+    private func getPlayerAnnotations() -> [PlayerAnnotation] {
+        return roomViewModel.players.compactMap { player in
+            guard let location = gameViewModel.playerLocations[player.id] else { return nil }
+            
+            let color: Color
+            if player.role == .seeker {
+                color = .red  // 抓捕者显示红色
+            } else if gameViewModel.caughtPlayers.contains(player.id) {
+                color = .gray // 已被抓显示灰色
+            } else {
+                color = .blue // 未被抓的逃跑者显示蓝色
+            }
+            
+            return PlayerAnnotation(
+                id: player.id,
+                name: player.name,
+                location: location,
+                color: color
+            )
+        }
+    }
+    
     // 格式化时间
     private func formatTime(_ seconds: Int) -> String {
         let minutes = seconds / 60
         let remainingSeconds = seconds % 60
         return String(format: "%02d:%02d", minutes, remainingSeconds)
+    }
+}
+
+// 玩家标注模型
+struct PlayerAnnotation: Identifiable {
+    let id: String
+    let name: String
+    let location: CLLocationCoordinate2D
+    let color: Color
+}
+
+// 玩家位置标记视图
+struct PlayerLocationMarker: View {
+    let playerName: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Text(playerName)
+                .font(.caption)
+                .padding(4)
+                .background(Color.white)
+                .cornerRadius(4)
+                .shadow(radius: 2)
+            
+            Image(systemName: "triangle.fill")
+                .rotationEffect(.degrees(180))
+                .foregroundColor(.white)
+                .offset(y: -3)
+            
+            Circle()
+                .fill(color)
+                .frame(width: 20, height: 20)
+                .shadow(radius: 2)
+        }
     }
 }
 

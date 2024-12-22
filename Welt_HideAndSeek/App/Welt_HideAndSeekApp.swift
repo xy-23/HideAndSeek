@@ -19,7 +19,7 @@ struct Welt_HideAndSeekApp: App {
                 LoginView()
                     .navigationDestination(isPresented: .constant(roomViewModel.currentRoom != nil)) {
                         Group {
-                            if roomViewModel.checkGameStatus() {
+                            if roomViewModel.currentRoom?.gameStatus == .playing {
                                 GameView()
                                     .sheet(isPresented: $gameViewModel.showResult) {
                                         ResultView()

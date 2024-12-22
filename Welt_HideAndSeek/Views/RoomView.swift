@@ -189,7 +189,7 @@ struct PlayerControlsView: View {
     
     var body: some View {
         Button(action: onLeave) {
-            Text("退出")
+            Text("退出房间")
                 .bold()
                 .frame(maxWidth: .infinity)
                 .padding()

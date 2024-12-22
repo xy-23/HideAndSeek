@@ -12,24 +12,28 @@ class RoomViewModel: ObservableObject {
     
     private let networkManager = NetworkManager()
     
-    // 房间验证状态
-    enum RoomError: Error {
-        case roomNotFound
-        case roomFull
-        case gameAlreadyStarted
-        case invalidRoomId
+    init() {
+        // 添加房间更新通知监听
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRoomUpdate),
+            name: .roomUpdated,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func handleRoomUpdate(_ notification: Notification) {
+        guard let roomId = notification.userInfo?["roomId"] as? String,
+              let updatedRoom = notification.userInfo?["room"] as? Room,
+              roomId == self.roomId else { return }
         
-        var message: String {
-            switch self {
-            case .roomNotFound:
-                return "房间不存在"
-            case .roomFull:
-                return "房间已满"
-            case .gameAlreadyStarted:
-                return "游戏已开始"
-            case .invalidRoomId:
-                return "无效的房间ID"
-            }
+        DispatchQueue.main.async {
+            self.currentRoom = updatedRoom
+            self.players = updatedRoom.players
         }
     }
     
@@ -40,10 +44,14 @@ class RoomViewModel: ObservableObject {
         }
     }
     
+    private func generateRoomId() -> String {
+        String(format: "%06d", Int.random(in: 100000...999999))
+    }
+    
     func createRoom() {
         guard let host = currentPlayer else { return }
         let newRoom = Room(
-            id: UUID().uuidString,
+            id: generateRoomId(),
             host: host,
             players: [host],
             maxPlayers: 8,
@@ -53,33 +61,51 @@ class RoomViewModel: ObservableObject {
         currentRoom = newRoom
         roomId = newRoom.id
         players = [host]
+        networkManager.addRoom(newRoom)
+        
+        // 提示房主房间创建成功
+        errorMessage = "房间创建成功！房间ID：\(newRoom.id)"
+        showError = true
     }
     
     func joinRoom(roomId: String) {
         guard let player = currentPlayer else { return }
         
         // 验证房间ID格式
-        guard UUID(uuidString: roomId) != nil else {
-            handleError(.invalidRoomId)
+        guard roomId.count == 6, Int(roomId) != nil else {
+            errorMessage = "房间ID必须是6位数字"
+            showError = true
             return
         }
         
-        // 验证房间是否存在
-        if let room = currentRoom, room.id == roomId {
-            // 验证房间状态和人数
-            guard room.gameStatus == .waiting else {
-                handleError(.gameAlreadyStarted)
-                return
-            }
-            guard room.players.count < room.maxPlayers else {
-                handleError(.roomFull)
-                return
-            }
+        networkManager.verifyRoom(roomId) { [weak self] status in
+            guard let self = self else { return }
             
-            self.roomId = roomId
-            players.append(player)
-        } else {
-            handleError(.roomNotFound)
+            DispatchQueue.main.async {
+                switch status {
+                case .inProgress:
+                    self.errorMessage = "该房间游戏已开始"
+                    self.showError = true
+                case .full:
+                    self.errorMessage = "该房间已满"
+                    self.showError = true
+                case .notFound:
+                    self.errorMessage = "房间不存在"
+                    self.showError = true
+                case .available:
+                    if let room = self.networkManager.findRoom(roomId) {
+                        self.currentRoom = room
+                        self.roomId = roomId
+                        self.players = room.players
+                        self.players.append(player)
+                        
+                        // 更新房间信息
+                        var updatedRoom = room
+                        updatedRoom.players = self.players
+                        self.networkManager.updateRoom(updatedRoom)
+                    }
+                }
+            }
         }
     }
     
@@ -92,7 +118,15 @@ class RoomViewModel: ObservableObject {
         if let player = currentPlayer {
             players.removeAll(where: { $0.id == player.id })
             if player.isHost {
+                if let roomId = currentRoom?.id {
+                    networkManager.removeRoom(roomId)
+                }
                 currentRoom = nil
+            } else if let room = currentRoom {
+                // 更新房间信息
+                var updatedRoom = room
+                updatedRoom.players = players
+                networkManager.updateRoom(updatedRoom)
             }
         }
         currentPlayer = nil
@@ -135,16 +169,6 @@ class RoomViewModel: ObservableObject {
         currentRoom?.gameStatus = .finished
     }
     
-    func resetRoom() {
-        currentRoom?.gameStatus = .waiting
-        players.forEach { player in
-            if let index = players.firstIndex(where: { $0.id == player.id }) {
-                players[index].isReady = false
-                players[index].role = .runner
-            }
-        }
-    }
-    
     func assignPlayerRoles() {
         // 随机选择一名玩家作为抓捕者
         guard let seekerIndex = players.indices.randomElement() else { return }
@@ -169,10 +193,5 @@ class RoomViewModel: ObservableObject {
         let validPlayerCount = players.count >= 2 && players.count <= currentRoom.maxPlayers
         
         return allReady && validPlayerCount
-    }
-    
-    // 添加监听游戏状态的方法
-    func checkGameStatus() -> Bool {
-        return currentRoom?.gameStatus == .playing
     }
 } 
