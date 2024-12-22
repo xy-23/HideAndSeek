@@ -40,7 +40,7 @@ struct ResultView: View {
                         .shadow(radius: 10)
                 )
                 
-                // 游戏统计信息
+                // 修改游戏统计信息
                 VStack(alignment: .leading, spacing: 15) {
                     StatisticRow(
                         icon: "clock.fill",
@@ -59,7 +59,7 @@ struct ResultView: View {
                     StatisticRow(
                         icon: "person.fill.checkmark",
                         title: "存活玩家",
-                        value: "\(roomViewModel.players.count - gameViewModel.caughtPlayers.count)人",
+                        value: "\(getSurvivingRunnersCount())人",
                         color: .green
                     )
                 }
@@ -90,6 +90,12 @@ struct ResultView: View {
             }
             .padding()
         }
+    }
+    
+    // 新增：计算存活的逃跑者数量的方法
+    private func getSurvivingRunnersCount() -> Int {
+        let totalRunners = gameViewModel.currentPlayers.filter { $0.role == .runner }.count
+        return totalRunners - gameViewModel.caughtPlayers.count
     }
 }
 

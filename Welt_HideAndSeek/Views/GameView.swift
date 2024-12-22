@@ -33,8 +33,8 @@ struct GameView: View {
                 VStack {
                     // 顶部信息栏
                     HStack(spacing: 15) {
-                        // 返回按钮和计时器卡片
-                        HStack {
+                        // 计时器卡片
+                        HStack(spacing: 8) {
                             Button(action: {
                                 roomViewModel.currentRoom?.gameStatus = .waiting
                             }) {
@@ -42,13 +42,13 @@ struct GameView: View {
                                     .foregroundColor(.blue)
                                     .imageScale(.large)
                             }
-                            .padding(.trailing)
                             
                             Image(systemName: "clock.fill")
                                 .foregroundColor(.blue)
-                            Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
+                            Text("\(formatTime(Int(gameViewModel.gameTimeRemaining)))")
                                 .bold()
                         }
+                        .frame(maxWidth: .infinity)
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 15)
@@ -56,13 +56,14 @@ struct GameView: View {
                                 .shadow(radius: 5)
                         )
                         
-                        // 新增：玩家状态卡片
-                        HStack {
+                        // 玩家状态卡片
+                        HStack(spacing: 8) {
                             Image(systemName: "person.2.fill")
                                 .foregroundColor(.blue)
-                            Text("\(gameViewModel.caughtPlayers.count)/\(getRunnersCount())已抓获")
+                            Text("\(gameViewModel.caughtPlayers.count)/\(getRunnersCount())")
                                 .bold()
                         }
+                        .frame(maxWidth: .infinity)
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 15)

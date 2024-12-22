@@ -199,10 +199,10 @@ struct CreateGameDialog: View {
                         .foregroundColor(.blue)
                 }
                 
-                Slider(value: $maxPlayers, in: 2...8, step: 1)
+                Slider(value: $maxPlayers, in: 2...20, step: 1)
                     .accentColor(.blue)
                 
-                Text("可容纳2-8名玩家")
+                Text("可容纳2-20名玩家")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
