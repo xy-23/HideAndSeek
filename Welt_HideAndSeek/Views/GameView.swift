@@ -137,10 +137,11 @@ struct GameView: View {
     
     // 玩家角色标签
     private func PlayerRoleTag(player: Player) -> some View {
-        HStack {
-            Image(systemName: getRoleIcon(player))
-                .foregroundColor(getRoleColor(player))
-            Text(getRoleText(player))
+        let roleInfo = getRoleInfo(player)
+        return HStack {
+            Image(systemName: roleInfo.icon)
+                .foregroundColor(roleInfo.color)
+            Text(roleInfo.text)
                 .bold()
         }
         .padding()
@@ -151,64 +152,22 @@ struct GameView: View {
         )
     }
     
-    private func getRoleIcon(_ player: Player) -> String {
-        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
-            if currentPlayer.role == .seeker {
-                return "eye.fill"
-            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
-                return "xmark.circle.fill"
+    // 新增一个辅助方法来获取角色信息
+    private func getRoleInfo(_ player: Player) -> (icon: String, color: Color, text: String) {
+        // 确保我们使用的是当前玩家的实际角色
+        if let currentPlayer = roomViewModel.currentPlayer {
+            if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
+                return ("xmark.circle.fill", .gray, "已被抓获")
             } else {
-                return "figure.run"
+                switch currentPlayer.role {
+                case .seeker:
+                    return ("eye.fill", .red, "追捕者")
+                case .runner:
+                    return ("figure.run", .green, "逃跑者")
+                }
             }
         }
-        
-        if player.role == .seeker {
-            return "eye.fill"
-        } else if gameViewModel.caughtPlayers.contains(player.id) {
-            return "xmark.circle.fill"
-        } else {
-            return "figure.run"
-        }
-    }
-    
-    private func getRoleColor(_ player: Player) -> Color {
-        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
-            if currentPlayer.role == .seeker {
-                return .red
-            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
-                return .gray
-            } else {
-                return .green
-            }
-        }
-        
-        if player.role == .seeker {
-            return .red
-        } else if gameViewModel.caughtPlayers.contains(player.id) {
-            return .gray
-        } else {
-            return .green
-        }
-    }
-    
-    private func getRoleText(_ player: Player) -> String {
-        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
-            if currentPlayer.role == .seeker {
-                return "追捕者"
-            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
-                return "已被抓获"
-            } else {
-                return "逃跑者"
-            }
-        }
-        
-        if player.role == .seeker {
-            return "追捕者"
-        } else if gameViewModel.caughtPlayers.contains(player.id) {
-            return "已被抓获"
-        } else {
-            return "逃跑者"
-        }
+        return ("figure.run", .green, "逃跑者") // 默认值
     }
 }
 
