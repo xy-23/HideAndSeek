@@ -147,13 +147,7 @@ struct LoginView: View {
         }
         
         roomViewModel.createPlayer(name: playerName, isHost: true)
-        roomViewModel.createRoom()
-        if let room = roomViewModel.currentRoom {
-            roomViewModel.updateGameSettings(
-                maxPlayers: maxPlayersInt,
-                duration: TimeInterval(durationMinutes * 60)
-            )
-        }
+        roomViewModel.createRoom(maxPlayers: maxPlayersInt, duration: TimeInterval(durationMinutes * 60))
     }
     
     private func joinGame() {
