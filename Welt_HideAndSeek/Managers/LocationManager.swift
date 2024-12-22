@@ -9,10 +9,18 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     private let locationManager = CLLocationManager()
     
-    enum LocationError: LocalizedError {
+    enum LocationError: LocalizedError, Identifiable {
         case accessDenied
         case locationDisabled
         case updateFailed
+        
+        var id: String {
+            switch self {
+            case .accessDenied: return "accessDenied"
+            case .locationDisabled: return "locationDisabled"
+            case .updateFailed: return "updateFailed"
+            }
+        }
         
         var errorDescription: String? {
             switch self {

@@ -37,7 +37,7 @@ struct GameView: View {
         .onDisappear {
             locationManager.stopUpdatingLocation()
         }
-        .onChange(of: locationManager.location) { location in
+        .onReceive(locationManager.$location) { location in
             if let newLocation = location {
                 withAnimation {
                     region.center = newLocation
