@@ -198,7 +198,7 @@ struct PlayerAnnotation: Identifiable {
     let color: Color
 }
 
-// 玩家位置标记视图
+// 修改玩家位置标记视图
 struct PlayerLocationMarker: View {
     let playerName: String
     let color: Color
@@ -222,7 +222,7 @@ struct PlayerLocationMarker: View {
             
             Circle()
                 .fill(color)
-                .frame(width: isCurrentPlayer ? 30 : 20, height: isCurrentPlayer ? 30 : 20)
+                .frame(width: isCurrentPlayer ? 15 : 10, height: isCurrentPlayer ? 15 : 10)
                 .shadow(radius: 2)
         }
     }
