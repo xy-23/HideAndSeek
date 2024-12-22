@@ -30,22 +30,33 @@ struct GameView: View {
             }
         }
         .onAppear {
-            locationManager.requestAuthorization()
-            locationManager.startUpdatingLocation()
+            DispatchQueue.main.async {
+                locationManager.requestAuthorization()
+                locationManager.startUpdatingLocation()
+            }
         }
         .onDisappear {
             locationManager.stopUpdatingLocation()
         }
         .onChange(of: locationManager.location) { newLocation in
             if let location = newLocation {
-                // 更新地图中心点为当前位置
-                region.center = location
+                withAnimation {
+                    region.center = location
+                }
                 
                 // 更新游戏中的位置信息
                 if let playerId = roomViewModel.currentPlayer?.id {
-                    gameViewModel.updateLocation(playerId: playerId, location: location)
+                    gameViewModel.updateLocation(playerId: playerId, 
+                                              location: location)
                 }
             }
+        }
+        .alert(item: $locationManager.locationError) { error in
+            Alert(
+                title: Text("位置错误"),
+                message: Text(error.errorDescription ?? "未知错误"),
+                dismissButton: .default(Text("确定"))
+            )
         }
     }
 }

@@ -23,6 +23,9 @@ struct ResultView: View {
                 // 重置游戏状态
                 gameViewModel.resetGame()
                 roomViewModel.currentRoom?.gameStatus = .waiting
+                for i in 0..<roomViewModel.players.count {
+                    roomViewModel.players[i].isReady = false
+                }
                 dismiss()
             }
             .padding()

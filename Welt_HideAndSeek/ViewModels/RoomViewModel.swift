@@ -64,25 +64,21 @@ class RoomViewModel: ObservableObject {
             return
         }
         
-        // 检查是否是当前已存在的房间
+        // 验证房间是否存在
         if let room = currentRoom, room.id == roomId {
-            // 验证房间状态
+            // 验证房间状态和人数
             guard room.gameStatus == .waiting else {
                 handleError(.gameAlreadyStarted)
                 return
             }
-            
-            // 验证房间人数
             guard room.players.count < room.maxPlayers else {
                 handleError(.roomFull)
                 return
             }
             
-            // 通过验证，加入房间
             self.roomId = roomId
             players.append(player)
         } else {
-            // 房间不存在
             handleError(.roomNotFound)
         }
     }
@@ -104,6 +100,7 @@ class RoomViewModel: ObservableObject {
     }
     
     func kickPlayer(player: Player) {
+        guard currentPlayer?.isHost == true else { return }
         players.removeAll(where: { $0.id == player.id })
     }
     

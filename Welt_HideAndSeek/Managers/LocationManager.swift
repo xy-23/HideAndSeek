@@ -29,6 +29,25 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 10 // 10米更新一次
+    }
+    
+    func requestAuthorization() {
+        locationManager.requestWhenInUseAuthorization()
+    }
+    
+    func startUpdatingLocation() {
+        locationManager.startUpdatingLocation()
+    }
+    
+    func stopUpdatingLocation() {
+        locationManager.stopUpdatingLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last?.coordinate else { return }
+        self.location = location
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
