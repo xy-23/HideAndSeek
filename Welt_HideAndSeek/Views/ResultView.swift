@@ -53,7 +53,7 @@ struct ResultView: View {
                     StatisticRow(
                         icon: "person.fill.checkmark",
                         title: "存活玩家",
-                        value: "\(roomViewModel.players.count - gameVieqqwModel.caughtPlayers.count)人",
+                        value: "\(roomViewModel.players.count - gameViewModel.caughtPlayers.count)人",
                         color: .green
                     )
                 }
@@ -126,6 +126,6 @@ struct StatisticRow: View {
 
 #Preview {
     ResultView()
-        .environmentObject(RoomViewModel())
         .environmentObject(GameViewModel())
+        .environmentObject(RoomViewModel(gameViewModel: GameViewModel()))
 } 
