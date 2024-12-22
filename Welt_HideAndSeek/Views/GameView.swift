@@ -12,46 +12,62 @@ struct GameView: View {
     )
     
     var body: some View {
-        ZStack {
-            // 地图视图
-            Map(coordinateRegion: $region,
-                showsUserLocation: true,
-                userTrackingMode: .constant(.follow),
-                annotationItems: getPlayerAnnotations()) { annotation in
-                    MapAnnotation(coordinate: annotation.location) {
-                        PlayerLocationMarker(
-                            playerName: annotation.name,
-                            color: annotation.color
-                        )
-                    }
-            }
-            .edgesIgnoringSafeArea(.all)
-            
-            // 游戏信息覆盖层
-            VStack {
-                // 计时器卡片
-                HStack {
-                    Image(systemName: "clock.fill")
-                        .foregroundColor(.blue)
-                    Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
-                        .bold()
+        NavigationStack {
+            ZStack {
+                // 修改地图视图，移除系统默认的用户位置标记
+                Map(coordinateRegion: $region,
+                    showsUserLocation: false,
+                    userTrackingMode: .constant(.follow),
+                    annotationItems: getPlayerAnnotations()) { annotation in
+                        MapAnnotation(coordinate: annotation.location) {
+                            PlayerLocationMarker(
+                                playerName: annotation.name,
+                                color: annotation.color,
+                                isCurrentPlayer: annotation.id == roomViewModel.currentPlayer?.id
+                            )
+                        }
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.white.opacity(0.9))
-                        .shadow(radius: 5)
-                )
-                .padding()
+                .edgesIgnoringSafeArea(.all)
                 
-                Spacer()
-                
-                // 玩家角色信息
-                if let currentPlayer = roomViewModel.currentPlayer {
-                    PlayerRoleTag(player: currentPlayer)
+                // 游戏信息覆盖层
+                VStack {
+                    // 计时器卡片
+                    HStack {
+                        // 添加返回按钮
+                        Button(action: {
+                            // 返回房间
+                            roomViewModel.currentRoom?.gameStatus = .waiting
+                        }) {
+                            Image(systemName: "chevron.left")
+                                .foregroundColor(.blue)
+                                .imageScale(.large)
+                        }
+                        .padding(.trailing)
+                        
+                        Image(systemName: "clock.fill")
+                            .foregroundColor(.blue)
+                        Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
+                            .bold()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.white.opacity(0.9))
+                            .shadow(radius: 5)
+                    )
+                    .padding()
+                    
+                    Spacer()
+                    
+                    // 玩家角色信息
+                    if let currentPlayer = roomViewModel.currentPlayer {
+                        PlayerRoleTag(player: currentPlayer)
+                            .padding(.bottom)
+                    }
                 }
             }
         }
+        .navigationBarHidden(true)
         .onAppear {
             DispatchQueue.main.async {
                 locationManager.requestAuthorization()
@@ -173,24 +189,27 @@ struct PlayerAnnotation: Identifiable {
 struct PlayerLocationMarker: View {
     let playerName: String
     let color: Color
+    let isCurrentPlayer: Bool
     
     var body: some View {
         VStack(spacing: 0) {
-            Text(playerName)
-                .font(.caption)
-                .padding(4)
-                .background(Color.white)
-                .cornerRadius(4)
-                .shadow(radius: 2)
-            
-            Image(systemName: "triangle.fill")
-                .rotationEffect(.degrees(180))
-                .foregroundColor(.white)
-                .offset(y: -3)
+            if !isCurrentPlayer {
+                Text(playerName)
+                    .font(.caption)
+                    .padding(4)
+                    .background(Color.white)
+                    .cornerRadius(4)
+                    .shadow(radius: 2)
+                
+                Image(systemName: "triangle.fill")
+                    .rotationEffect(.degrees(180))
+                    .foregroundColor(.white)
+                    .offset(y: -3)
+            }
             
             Circle()
                 .fill(color)
-                .frame(width: 20, height: 20)
+                .frame(width: isCurrentPlayer ? 30 : 20, height: isCurrentPlayer ? 30 : 20)
                 .shadow(radius: 2)
         }
     }
