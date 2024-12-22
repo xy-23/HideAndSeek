@@ -95,30 +95,44 @@ class NetworkManager: ObservableObject {
         mockRooms.removeAll { $0.id == roomId }
     }
     
-    // 模拟自动加入的玩家
+    // 扩展模拟玩家列表
     private let mockPlayers = [
         Player(name: "测试玩家1", isHost: false),
-        Player(name: "测试玩家2", isHost: false)
+        Player(name: "测试玩家2", isHost: false),
+        Player(name: "测试玩家3", isHost: false),
+        Player(name: "测试玩家4", isHost: false),
+        Player(name: "测试玩家5", isHost: false),
+        Player(name: "测试玩家6", isHost: false),
+        Player(name: "测试玩家7", isHost: false),
+        Player(name: "测试玩家8", isHost: false),
+        Player(name: "测试玩家9", isHost: false),
+        Player(name: "测试玩家10", isHost: false)
     ]
     
-    // 添加新房间并模拟玩家加入
+    // 修改添加房间的方法
     func addRoom(_ room: Room) {
         mockRooms.append(room)
         
-        // 模拟延迟后玩家陆续加入
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.trySimulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[0])
-        }
+        // 随机决定要加入的玩家数量（1-5个）
+        let numberOfPlayersToJoin = Int.random(in: 1...5)
+        var availablePlayers = mockPlayers.shuffled() // 随机打乱玩家顺序
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
-            self?.trySimulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[1])
+        // 为每个要加入的玩家设置随机延迟
+        for i in 0..<numberOfPlayersToJoin {
+            guard i < availablePlayers.count else { break }
+            
+            // 生成随机延迟时间（1-10秒）
+            let randomDelay = Double.random(in: 1...10)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
+                self?.trySimulatePlayerJoining(roomId: room.id, player: availablePlayers[i])
+            }
         }
     }
     
-    // 尝试模拟玩家加入房间
-    private func trySimulatePlayerJoining(roomId: String, player: Player?) {
-        guard let player = player,
-              let index = mockRooms.firstIndex(where: { $0.id == roomId }) else { return }
+    // 修改玩家加入的模拟方法
+    private func trySimulatePlayerJoining(roomId: String, player: Player) {
+        guard let index = mockRooms.firstIndex(where: { $0.id == roomId }) else { return }
         
         // 检查房间是否有空位
         let room = mockRooms[index]
@@ -138,6 +152,21 @@ class NetworkManager: ObservableObject {
             object: nil,
             userInfo: ["roomId": roomId, "room": updatedRoom]
         )
+        
+        // 有一定概率（30%）在短暂延迟后继续添加新玩家
+        if Double.random(in: 0...1) < 0.3 {
+            let remainingPlayers = mockPlayers.filter { mockPlayer in
+                !updatedRoom.players.contains { $0.id == mockPlayer.id }
+            }
+            
+            if let nextPlayer = remainingPlayers.first {
+                // 1-5秒的随机延迟
+                let randomDelay = Double.random(in: 1...5)
+                DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
+                    self?.trySimulatePlayerJoining(roomId: roomId, player: nextPlayer)
+                }
+            }
+        }
     }
     
     // 更新房间信息
