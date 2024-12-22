@@ -107,26 +107,47 @@ class RoomViewModel: ObservableObject {
     
     func leaveRoom() {
         if let player = currentPlayer {
+            // 从房间中移除当前玩家
             players.removeAll(where: { $0.id == player.id })
+            
             if player.isHost {
-                if let roomId = currentRoom?.id {
-                    networkManager.removeRoom(roomId:roomId)
+                if let room = currentRoom {
+                    // 房主解散房间时，通知所有玩家退出
+                    for player in room.players {
+                        if !player.isHost {
+                            // 其他玩家退出房间
+                            players.removeAll(where: { $0.id == player.id })
+                        }
+                    }
+                    // 删除房间
+                    networkManager.removeRoom(roomId:room.id)
                 }
                 currentRoom = nil
             } else if let room = currentRoom {
-                // 更新房间信息
+                // 普通玩家退出，更新房间信息
                 var updatedRoom = room
                 updatedRoom.players = players
                 networkManager.updateRoom(updatedRoom)
             }
         }
+        
+        // 清理当前玩家对象和房间ID
         currentPlayer = nil
         roomId = ""
     }
     
     func kickPlayer(player: Player) {
         guard currentPlayer?.isHost == true else { return }
+        
+        // 从房间中移除被踢玩家
         players.removeAll(where: { $0.id == player.id })
+        
+        // 更新房间信息
+        if let room = currentRoom {
+            var updatedRoom = room
+            updatedRoom.players = players
+            networkManager.updateRoom(updatedRoom)
+        }
     }
     
     func updateGameSettings(maxPlayers: Int, duration: TimeInterval) {
