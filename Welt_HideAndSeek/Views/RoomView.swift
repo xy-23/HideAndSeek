@@ -30,7 +30,7 @@ struct RoomView: View {
                     Divider()
                         .padding(.horizontal)
                     
-                    // 游戏时长显示
+                    // 游戏��长显示
                     if let duration = roomViewModel.currentRoom?.gameDuration {
                         HStack {
                             Image(systemName: "clock.fill")
@@ -92,6 +92,7 @@ struct RoomView: View {
             }
             .padding()
         }
+        .navigationBarHidden(true)
     }
 }
 

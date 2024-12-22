@@ -14,7 +14,8 @@ class GameViewModel: ObservableObject {
 
     private var gameTimer: Timer?
     private var startTime: Date?
-
+    private var isPaused: Bool = false
+    
     private let catchDistance: Double = 5.0
     
     enum GameStatus {
@@ -38,6 +39,7 @@ class GameViewModel: ObservableObject {
         gameTimeRemaining = 0
         startTime = nil
         gameDuration = 0
+        isPaused = false
         
         for i in currentPlayers.indices {
             currentPlayers[i].role = .runner
@@ -93,12 +95,30 @@ class GameViewModel: ObservableObject {
     }
     
     func startGame(duration: TimeInterval, players: [Player]) {
+        resetGame()
         gameTimeRemaining = duration
         gameStatus = .playing
         currentPlayers = players
-        caughtPlayers.removeAll()
-        playerLocations.removeAll()
         startTime = Date()
+        isPaused = false
+        startTimer()
+    }
+    
+    func pauseGame() {
+        gameTimer?.invalidate()
+        gameTimer = nil
+        isPaused = true
+    }
+    
+    func resumeGame() {
+        if gameStatus == .playing && isPaused {
+            isPaused = false
+            startTimer()
+        }
+    }
+    
+    private func startTimer() {
+        gameTimer?.invalidate()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             guard let self = self else {

@@ -69,12 +69,17 @@ struct GameView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            // 视图出现时恢复游戏
+            gameViewModel.resumeGame()
+            
             DispatchQueue.main.async {
                 locationManager.requestAuthorization()
                 locationManager.startUpdatingLocation()
             }
         }
         .onDisappear {
+            // 视图消失时暂停游戏
+            gameViewModel.pauseGame()
             locationManager.stopUpdatingLocation()
         }
         .onReceive(locationManager.$location) { location in
@@ -147,6 +152,16 @@ struct GameView: View {
     }
     
     private func getRoleIcon(_ player: Player) -> String {
+        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
+            if currentPlayer.role == .seeker {
+                return "eye.fill"
+            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
+                return "xmark.circle.fill"
+            } else {
+                return "figure.run"
+            }
+        }
+        
         if player.role == .seeker {
             return "eye.fill"
         } else if gameViewModel.caughtPlayers.contains(player.id) {
@@ -157,6 +172,16 @@ struct GameView: View {
     }
     
     private func getRoleColor(_ player: Player) -> Color {
+        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
+            if currentPlayer.role == .seeker {
+                return .red
+            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
+                return .gray
+            } else {
+                return .green
+            }
+        }
+        
         if player.role == .seeker {
             return .red
         } else if gameViewModel.caughtPlayers.contains(player.id) {
@@ -167,6 +192,16 @@ struct GameView: View {
     }
     
     private func getRoleText(_ player: Player) -> String {
+        if let currentPlayer = roomViewModel.currentPlayer, player.id == currentPlayer.id {
+            if currentPlayer.role == .seeker {
+                return "追捕者"
+            } else if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
+                return "已被抓获"
+            } else {
+                return "逃跑者"
+            }
+        }
+        
         if player.role == .seeker {
             return "追捕者"
         } else if gameViewModel.caughtPlayers.contains(player.id) {
