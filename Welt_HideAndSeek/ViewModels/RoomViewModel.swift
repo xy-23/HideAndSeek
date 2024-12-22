@@ -32,8 +32,16 @@ class RoomViewModel: ObservableObject {
               roomId == self.roomId else { return }
         
         DispatchQueue.main.async {
-            self.currentRoom = updatedRoom
-            self.players = updatedRoom.players
+            // 只更新新加入的玩家
+            let newPlayers = updatedRoom.players.filter { newPlayer in
+                !self.players.contains { $0.id == newPlayer.id }
+            }
+            self.players.append(contentsOf: newPlayers)
+            
+            // 更新房间其他信息，但保留当前玩家列表
+            var room = updatedRoom
+            room.players = self.players
+            self.currentRoom = room
         }
     }
     
