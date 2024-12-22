@@ -62,10 +62,6 @@ class RoomViewModel: ObservableObject {
         roomId = newRoom.id
         players = [host]
         networkManager.addRoom(newRoom)
-        
-        // 提示房主房间创建成功
-        errorMessage = "房间创建成功！房间ID：\(newRoom.id)"
-        showError = true
     }
     
     func joinRoom(roomId: String) {
