@@ -13,6 +13,9 @@ struct LoginView: View {
     @State private var gameDuration: String = "5"
     @State private var roomId: String = ""
     
+    // 在 LoginView 中添加新的状态变量
+    @State private var showEmptyNameAlert = false  // 控制名字为空提示的显示
+    
     var body: some View {
         ZStack {
             VStack(spacing: 20) {
@@ -23,7 +26,9 @@ struct LoginView: View {
                 
                 // 创建游戏按钮
                 Button(action: {
-                    if !playerName.isEmpty {
+                    if playerName.isEmpty {
+                        showEmptyNameAlert = true
+                    } else {
                         showCreateGameDialog = true
                     }
                 }) {
@@ -38,7 +43,9 @@ struct LoginView: View {
                 
                 // 加入游戏按钮
                 Button(action: {
-                    if !playerName.isEmpty {
+                    if playerName.isEmpty {
+                        showEmptyNameAlert = true
+                    } else {
                         showJoinGameDialog = true
                     }
                 }) {
@@ -89,6 +96,12 @@ struct LoginView: View {
             Button("确定", role: .cancel) {}
         } message: {
             Text(roomViewModel.errorMessage)
+        }
+        // 在 ZStack 闭合前添加名字为空的提示对话框
+        .alert("提示", isPresented: $showEmptyNameAlert) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text("请输入您的名字")
         }
     }
     
