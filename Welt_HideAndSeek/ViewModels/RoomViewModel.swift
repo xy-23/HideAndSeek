@@ -133,12 +133,6 @@ class RoomViewModel: ObservableObject {
         players.removeAll(where: { $0.id == player.id })
     }
     
-    func setReady(isReady: Bool) {
-        if let index = players.firstIndex(where: { $0.id == currentPlayer?.id }) {
-            players[index].isReady = isReady
-        }
-    }
-    
     func updateGameSettings(maxPlayers: Int, duration: TimeInterval) {
         currentRoom?.maxPlayers = maxPlayers
         currentRoom?.gameDuration = duration
@@ -153,10 +147,15 @@ class RoomViewModel: ObservableObject {
         // 分配角色
         assignPlayerRoles()
         
-        // 模拟通知所有玩家进入游戏状态
-        // 实际实现时，这里应该是通过网络通知所有玩家
-        for i in 0..<players.count {
-            players[i].isReady = false  // 重置准备状态
+        // 更新网络管理器中的房间状态
+        if let room = currentRoom {
+            var updatedRoom = room
+            updatedRoom.gameStatus = .playing
+            updatedRoom.players = players
+            networkManager.updateRoom(updatedRoom)
+            
+            // 更新本地状态
+            currentRoom = updatedRoom
         }
     }
     
@@ -180,13 +179,9 @@ class RoomViewModel: ObservableObject {
     func canStartGame() -> Bool {
         guard let currentRoom = currentRoom else { return false }
         
-        // 检查是否所有非房主玩家都已准备
-        let nonHostPlayers = players.filter { !$0.isHost }
-        let allReady = nonHostPlayers.allSatisfy { $0.isReady }
-        
-        // 检查玩家数量是否在有效范围内
+        // 只检查玩家数量是否在有效范围内
         let validPlayerCount = players.count >= 2 && players.count <= currentRoom.maxPlayers
         
-        return allReady && validPlayerCount
+        return validPlayerCount
     }
 } 
