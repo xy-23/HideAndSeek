@@ -72,12 +72,12 @@ class NetworkManager: ObservableObject {
     
     // 查找房间
     func findRoom(roomId: String) -> Room? {
-        return mockRooms.first { $room in room.id == roomId }
+        return mockRooms.first { room in room.id == roomId:roomId }
     }
     
     // 验证房间状态
     func verifyRoom(_ roomId: String, completion: @escaping (RoomStatus) -> Void) {
-        if let room = findRoom(roomId) {
+        if let room = findRoom(roomId:roomId) {
             if room.gameStatus == .playing {
                 completion(.inProgress)
             } else if room.players.count >= room.maxPlayers {

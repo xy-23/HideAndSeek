@@ -93,7 +93,7 @@ class RoomViewModel: ObservableObject {
                     self.errorMessage = "房间不存在"
                     self.showError = true
                 case .available:
-                    if let room = self.networkManager.findRoom(roomId) {
+                    if let room = self.networkManager.findRoom(roomId:roomId) {
                         self.currentRoom = room
                         self.roomId = roomId
                         self.players = room.players
@@ -109,17 +109,12 @@ class RoomViewModel: ObservableObject {
         }
     }
     
-    private func handleError(_ error: RoomError) {
-        errorMessage = error.message
-        showError = true
-    }
-    
     func leaveRoom() {
         if let player = currentPlayer {
             players.removeAll(where: { $0.id == player.id })
             if player.isHost {
                 if let roomId = currentRoom?.id {
-                    networkManager.removeRoom(roomId)
+                    networkManager.removeRoom(roomId:roomId)
                 }
                 currentRoom = nil
             } else if let room = currentRoom {

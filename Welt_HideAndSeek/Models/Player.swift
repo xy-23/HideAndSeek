@@ -1,20 +1,14 @@
 import Foundation
 import CoreLocation
 
-struct Player: Identifiable, Equatable {
+struct Player: Identifiable {
     let id: String = UUID().uuidString
-    var name: String
-    var isHost: Bool
-    var isReady: Bool = false
-    var location: CLLocationCoordinate2D?
+    let name: String
+    let isHost: Bool
     var role: PlayerRole = .runner
     
     enum PlayerRole {
-        case runner
         case seeker
-    }
-    
-    static func == (lhs: Player, rhs: Player) -> Bool {
-        lhs.id == rhs.id
+        case runner
     }
 } 
