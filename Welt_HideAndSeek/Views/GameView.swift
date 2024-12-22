@@ -13,19 +13,47 @@ struct GameView: View {
     
     var body: some View {
         ZStack {
-            Map(coordinateRegion: $region, 
+            // 地图视图
+            Map(coordinateRegion: $region,
                 showsUserLocation: true,
                 userTrackingMode: .constant(.follow))
                 .edgesIgnoringSafeArea(.all)
             
+            // 游戏信息覆盖层
             VStack {
-                Text("剩余时间: \(Int(gameViewModel.gameTimeRemaining))秒")
-                    .padding()
-                    .background(Color.white.opacity(0.8))
-                    .cornerRadius(10)
-                    .padding()
+                // 计时器卡片
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .foregroundColor(.blue)
+                    Text("剩余时间: \(formatTime(Int(gameViewModel.gameTimeRemaining)))")
+                        .bold()
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white.opacity(0.9))
+                        .shadow(radius: 5)
+                )
+                .padding()
                 
                 Spacer()
+                
+                // 玩家角色信息
+                if let currentPlayer = roomViewModel.currentPlayer {
+                    HStack {
+                        Image(systemName: currentPlayer.role == .seeker ? "eye.fill" : "figure.run")
+                            .foregroundColor(currentPlayer.role == .seeker ? .red : .green)
+                        Text(currentPlayer.role == .seeker ? "抓捕者" : "逃跑者")
+                            .bold()
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.white.opacity(0.9))
+                            .shadow(radius: 5)
+                    )
+                    .padding()
+                }
             }
         }
         .onAppear {
@@ -58,6 +86,13 @@ struct GameView: View {
                 dismissButton: .default(Text("确定"))
             )
         }
+    }
+    
+    // 格式化时间
+    private func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
 
