@@ -10,8 +10,10 @@ class GameViewModel: ObservableObject {
     @Published var caughtPlayers: Set<String> = []
     @Published var showResult: Bool = false
     @Published var currentPlayers: [Player] = []
+    @Published var gameDuration: TimeInterval = 0
 
     private var gameTimer: Timer?
+    private var startTime: Date?
 
     private let catchDistance: Double = 5.0
     
@@ -27,24 +29,24 @@ class GameViewModel: ObservableObject {
     }
     
     func resetGame() {
-        playerLocations.removeAll()
-        gameTimeRemaining = 0
+        gameTimer?.invalidate()
+        gameTimer = nil
         gameStatus = .waiting
         gameResult = nil
         caughtPlayers.removeAll()
-        showResult = false
+        playerLocations.removeAll()
+        gameTimeRemaining = 0
+        startTime = nil
+        gameDuration = 0
+        
+        for i in currentPlayers.indices {
+            currentPlayers[i].role = .runner
+        }
     }
     
     private func checkGameEnd() {
-        // 检查游戏是否结束
-        let allRunnersCaught = caughtPlayers.count >= (playerLocations.count - 1) // 除了抓捕者外都被抓
-        
-        if allRunnersCaught {
-            gameResult = .seekerWin
+        if allRunnersCaught() {
             endGame(runnersWin: false)
-        } else if gameTimeRemaining <= 0 {
-            gameResult = .runnerWin
-            endGame(runnersWin: true)
         }
     }
     
@@ -53,6 +55,11 @@ class GameViewModel: ObservableObject {
         gameTimer = nil
         gameStatus = .finished
         gameResult = runnersWin ? .runnerWin : .seekerWin
+        
+        if let start = startTime {
+            gameDuration = Date().timeIntervalSince(start)
+        }
+        
         showResult = true
     }
     
@@ -91,6 +98,7 @@ class GameViewModel: ObservableObject {
         currentPlayers = players
         caughtPlayers.removeAll()
         playerLocations.removeAll()
+        startTime = Date()
         
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             guard let self = self else {
@@ -102,8 +110,14 @@ class GameViewModel: ObservableObject {
                 self.gameTimeRemaining -= 1
                 self.checkGameEnd()
             } else {
-                self.endGame(runnersWin: true)
+                let runnersWin = !self.allRunnersCaught()
+                self.endGame(runnersWin: runnersWin)
             }
         }
+    }
+    
+    private func allRunnersCaught() -> Bool {
+        let runners = currentPlayers.filter { $0.role == .runner }
+        return caughtPlayers.count >= runners.count
     }
 } 

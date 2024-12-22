@@ -25,7 +25,6 @@ struct ResultView: View {
                     Text(gameViewModel.gameResult == .seekerWin ? "追捕者胜利！" : "逃跑者胜利！")
                         .font(.title)
                         .bold()
-                        .foregroundColor(.primary)
                 }
                 .padding()
                 .background(
@@ -39,7 +38,7 @@ struct ResultView: View {
                     StatisticRow(
                         icon: "clock.fill",
                         title: "游戏时长",
-                        value: formatTime(Int(gameViewModel.gameTimeRemaining)),
+                        value: formatTime(Int(gameViewModel.gameDuration)),
                         color: .blue
                     )
                     
@@ -66,8 +65,8 @@ struct ResultView: View {
                 
                 // 返回按钮
                 Button(action: {
-                    gameViewModel.resetGame()
-                    roomViewModel.currentRoom?.gameStatus = .waiting
+                    gameViewModel.resetGame()  // 重置游戏状态
+                    roomViewModel.currentRoom?.gameStatus = .waiting  // 重置房间状态
                     dismiss()
                 }) {
                     HStack {
@@ -78,23 +77,12 @@ struct ResultView: View {
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.blue)
-                            .shadow(radius: 5)
-                    )
+                    .background(Color.blue)
+                    .cornerRadius(12)
                 }
-                .padding(.horizontal)
             }
             .padding()
         }
-    }
-    
-    // 格式化时间
-    private func formatTime(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainingSeconds = seconds % 60
-        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
 
