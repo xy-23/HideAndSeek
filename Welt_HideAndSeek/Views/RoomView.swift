@@ -16,13 +16,30 @@ struct RoomView: View {
             VStack(spacing: 25) {
                 // 房间信息卡片
                 VStack(spacing: 10) {
-                    Text("房间ID")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                    Text(roomViewModel.roomId)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
-                        .tracking(2) // 字符间距
+                    // 房间ID显示
+                    VStack(spacing: 5) {
+                        Text("房间ID")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text(roomViewModel.roomId)
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.primary)
+                            .tracking(2)
+                    }
+                    
+                    Divider()
+                        .padding(.horizontal)
+                    
+                    // 游戏时长显示
+                    if let duration = roomViewModel.currentRoom?.gameDuration {
+                        HStack {
+                            Image(systemName: "clock.fill")
+                                .foregroundColor(.blue)
+                            Text("游戏时长：\(Int(duration/60))分钟")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                        }
+                    }
                 }
                 .padding()
                 .frame(maxWidth: .infinity)

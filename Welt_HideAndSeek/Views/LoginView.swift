@@ -190,22 +190,9 @@ struct CreateGameDialogView: View {
     @Binding var gameDuration: String
     let onCreate: () -> Void
     
-    // 添加验证和格式化方法
-    private func validateAndFormatMaxPlayers(_ input: String) {
-        if let value = Int(input) {
-            maxPlayers = String(min(10, max(2, value)))  // 限制在2-10之间
-        } else if input.isEmpty {
-            maxPlayers = "4"  // 为空时设为默认值
-        }
-    }
-    
-    private func validateAndFormatDuration(_ input: String) {
-        if let value = Int(input) {
-            gameDuration = String(min(30, max(1, value)))  // 限制在1-30之间
-        } else if input.isEmpty {
-            gameDuration = "5"  // 为空时设为默认值
-        }
-    }
+    // 添加用于滑块的状态变量
+    @State private var playersCount: Double = 4  // 默认4人
+    @State private var durationMinutes: Double = 5  // 默认5分钟
     
     var body: some View {
         VStack(spacing: 20) {
@@ -213,35 +200,52 @@ struct CreateGameDialogView: View {
                 .font(.headline)
                 .padding(.top)
             
-            VStack(alignment: .leading, spacing: 15) {
+            VStack(alignment: .leading, spacing: 20) {
+                // 游戏人数滑块
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("游戏人数:")
-                        .foregroundColor(.gray)
-                    TextField("2-10人", text: $maxPlayers)
-                        .textFieldStyle(CustomTextFieldStyle())
-                        .keyboardType(.numberPad)
-                        .onChange(of: maxPlayers) { newValue in
-                            validateAndFormatMaxPlayers(newValue)
+                    HStack {
+                        Text("游戏人数:")
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text("\(Int(playersCount))人")
+                            .foregroundColor(.blue)
+                            .bold()
+                    }
+                    
+                    Slider(value: $playersCount, in: 2...10, step: 1)
+                        .accentColor(.blue)
+                        .onChange(of: playersCount) { newValue in
+                            maxPlayers = String(Int(newValue))
                         }
+                    
                     Text("可选范围：2-10人")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 
+                // 游戏时长滑块
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("游戏时长:")
-                        .foregroundColor(.gray)
-                    TextField("分钟", text: $gameDuration)
-                        .textFieldStyle(CustomTextFieldStyle())
-                        .keyboardType(.numberPad)
-                        .onChange(of: gameDuration) { newValue in
-                            validateAndFormatDuration(newValue)
+                    HStack {
+                        Text("游戏时长:")
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text("\(Int(durationMinutes))分钟")
+                            .foregroundColor(.blue)
+                            .bold()
+                    }
+                    
+                    Slider(value: $durationMinutes, in: 1...30, step: 1)
+                        .accentColor(.blue)
+                        .onChange(of: durationMinutes) { newValue in
+                            gameDuration = String(Int(newValue))
                         }
+                    
                     Text("可选范围：1-30分钟")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
             }
+            .padding(.vertical)
             
             HStack(spacing: 20) {
                 Button("取消") {
@@ -254,6 +258,8 @@ struct CreateGameDialogView: View {
                 .cornerRadius(12)
                 
                 Button("创建") {
+                    maxPlayers = String(Int(playersCount))
+                    gameDuration = String(Int(durationMinutes))
                     onCreate()
                     isPresented = false
                 }
@@ -269,6 +275,15 @@ struct CreateGameDialogView: View {
         .cornerRadius(20)
         .shadow(radius: 20)
         .padding(.horizontal, 40)
+        .onAppear {
+            // 初始化滑块值
+            if let players = Int(maxPlayers) {
+                playersCount = Double(players)
+            }
+            if let duration = Int(gameDuration) {
+                durationMinutes = Double(duration)
+            }
+        }
     }
 }
 
