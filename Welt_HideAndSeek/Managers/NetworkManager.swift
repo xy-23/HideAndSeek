@@ -1,183 +1,267 @@
 import Foundation
+import MultipeerConnectivity
 import CoreLocation
 
-class NetworkManager: ObservableObject {
-    // 模拟房间存储
-    private var mockRooms: [Room] = [
-        // ID: 222222 - 可加入的房间
-        Room(
-            id: "222222",
-            host: Player(name: "房主", isHost: true),
-            players: [
-                Player(name: "房主", isHost: true),
-                Player(name: "玩家1", isHost: false)
-            ],
-            maxPlayers: 8,
-            gameDuration: 300,
-            gameStatus: .waiting
-        ),
-        // ID: 111111 - 已开始游戏的房间
-        Room(
-            id: "111111",
-            host: Player(name: "房主A", isHost: true),
-            players: [
-                Player(name: "房主A", isHost: true),
-                Player(name: "玩家A1", isHost: false),
-                Player(name: "玩家A2", isHost: false)
-            ],
-            maxPlayers: 8,
-            gameDuration: 300,
-            gameStatus: .playing
-        ),
-        // ID: 666666 - 已满的房间
-        Room(
-            id: "666666",
-            host: Player(name: "房主B", isHost: true),
-            players: [
-                Player(name: "房主B", isHost: true),
-                Player(name: "玩家B1", isHost: false),
-                Player(name: "玩家B2", isHost: false),
-                Player(name: "玩家B3", isHost: false),
-                Player(name: "玩家B4", isHost: false),
-                Player(name: "玩家B5", isHost: false),
-                Player(name: "玩家B6", isHost: false),
-                Player(name: "玩家B7", isHost: false)
-            ],
-            maxPlayers: 8,
-            gameDuration: 300,
-            gameStatus: .waiting
+class NetworkManager: NSObject, ObservableObject {
+    // 发布状态属性
+    @Published var connectedPeers: [MCPeerID] = []
+    @Published var mockRooms: [Room] = []
+    
+    // MultipeerConnectivity 相关属性
+    private let serviceType = "hide-n-seek"
+    private var session: MCSession!
+    private var hostAdvertiser: MCNearbyServiceAdvertiser?
+    private var guestBrowser: MCNearbyServiceBrowser?
+    private let myPeerID: MCPeerID
+    
+    // 数据编码器和解码器
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+    
+    // 游戏数据类型枚举
+    enum DataType: String, Codable {
+        case playerInfo      // 玩家信息（名字、角色等）
+        case location       // 位置更新
+        case roomUpdate    // 房间状态更新
+        case gameStart     // 游戏开始
+        case gameEnd       // 游戏结束
+        case playerCaught  // 玩家被抓
+    }
+    
+    // 网络消息结构
+    struct NetworkMessage: Codable {
+        let type: DataType
+        let data: Data
+    }
+    
+    override init() {
+        myPeerID = MCPeerID(displayName: UIDevice.current.name)
+        super.init()
+        session = MCSession(peer: myPeerID, securityIdentity: nil, encryptionPreference: .required)
+        session.delegate = self
+    }
+    
+    // MARK: - 主机功能
+    
+    func startHosting(room: Room) {
+        // 停止之前的广播
+        stopHosting()
+        
+        // 创建广播服务
+        hostAdvertiser = MCNearbyServiceAdvertiser(
+            peer: myPeerID,
+            discoveryInfo: ["roomId": room.id],
+            serviceType: serviceType
         )
-    ]
-    
-    enum NetworkError: Error {
-        case roomNotFound
-        case unauthorized
+        hostAdvertiser?.delegate = self
+        hostAdvertiser?.startAdvertisingPeer()
         
-        var localizedDescription: String {
-            switch self {
-            case .roomNotFound:
-                return "找不到指定房间"
-            case .unauthorized:
-                return "未授权的操作"
-            }
+        // 保存房间信息
+        mockRooms = [room]
+    }
+    
+    func stopHosting() {
+        hostAdvertiser?.stopAdvertisingPeer()
+        hostAdvertiser = nil
+    }
+    
+    // MARK: - 客户端功能
+    
+    func startBrowsing() {
+        // 停止之前的搜索
+        stopBrowsing()
+        
+        // 创建搜索服务
+        guestBrowser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
+        guestBrowser?.delegate = self
+        guestBrowser?.startBrowsingForPeers()
+    }
+    
+    func stopBrowsing() {
+        guestBrowser?.stopBrowsingForPeers()
+        guestBrowser = nil
+    }
+    
+    // MARK: - 数据发送
+    
+    func sendPlayerInfo(_ player: Player) {
+        do {
+            let playerData = try encoder.encode(player)
+            let message = NetworkMessage(type: .playerInfo, data: playerData)
+            let messageData = try encoder.encode(message)
+            try session.send(messageData, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            print("Error sending player info: \(error)")
         }
     }
     
-    enum RoomStatus {
-        case available
-        case notFound
-        case full
-        case inProgress
-    }
-    
-    // 查找房间
-    func findRoom(roomId: String) -> Room? {
-        return mockRooms.first { room in room.id == roomId }
-    }
-    
-    // 验证房间状态
-    func verifyRoom(_ roomId: String, completion: @escaping (RoomStatus) -> Void) {
-        if let room = findRoom(roomId:roomId) {
-            if room.gameStatus == .playing {
-                completion(.inProgress)
-            } else if room.players.count >= room.maxPlayers {
-                completion(.full)
-            } else {
-                completion(.available)
-            }
-        } else {
-            completion(.notFound)
+    func sendLocation(_ location: CLLocationCoordinate2D, for playerId: String) {
+        do {
+            let locationInfo = ["playerId": playerId, "lat": location.latitude, "lon": location.longitude]
+            let locationData = try encoder.encode(locationInfo)
+            let message = NetworkMessage(type: .location, data: locationData)
+            let messageData = try encoder.encode(message)
+            try session.send(messageData, toPeers: session.connectedPeers, with: .unreliable)
+        } catch {
+            print("Error sending location: \(error)")
         }
     }
     
-    // 删除房间
-    func removeRoom(roomId: String) {
-        mockRooms.removeAll { $0.id == roomId }
-    }
-    
-    // 扩展模拟玩家列表
-    private let mockPlayers = [
-        Player(name: "测试玩家1", isHost: false),
-        Player(name: "测试玩家2", isHost: false),
-        Player(name: "测试玩家3", isHost: false),
-        Player(name: "测试玩家4", isHost: false),
-        Player(name: "测试玩家5", isHost: false),
-        Player(name: "测试玩家6", isHost: false),
-        Player(name: "测试玩家7", isHost: false),
-        Player(name: "测试玩家8", isHost: false),
-        Player(name: "测试玩家9", isHost: false),
-        Player(name: "测试玩家10", isHost: false)
-    ]
-    
-    // 修改添加房间的方法
-    func addRoom(_ room: Room) {
-        mockRooms.append(room)
-        
-        // 随机决定要加入的玩家数量（1-5个）
-        let numberOfPlayersToJoin = Int.random(in: 1...5)
-        var availablePlayers = mockPlayers.shuffled() // 随机打乱玩家顺序
-        
-        // 为每个要加入的玩家设置随机延迟
-        for i in 0..<numberOfPlayersToJoin {
-            guard i < availablePlayers.count else { break }
-            
-            // 生成随机延迟时间（1-10秒）
-            let randomDelay = Double.random(in: 1...10)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
-                self?.trySimulatePlayerJoining(roomId: room.id, player: availablePlayers[i])
-            }
+    func sendRoomUpdate(_ room: Room) {
+        do {
+            let roomData = try encoder.encode(room)
+            let message = NetworkMessage(type: .roomUpdate, data: roomData)
+            let messageData = try encoder.encode(message)
+            try session.send(messageData, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            print("Error sending room update: \(error)")
         }
     }
     
-    // 修改玩家加入的模拟方法
-    private func trySimulatePlayerJoining(roomId: String, player: Player) {
-        guard let index = mockRooms.firstIndex(where: { $0.id == roomId }) else { return }
-        
-        // 检查房间是否有空位
-        let room = mockRooms[index]
-        guard room.players.count < room.maxPlayers else { return }
-        
-        // 检查房间状态
-        guard room.gameStatus == .waiting else { return }
-        
-        // 更新房间玩家列表
-        var updatedRoom = room
-        updatedRoom.players.append(player)
-        mockRooms[index] = updatedRoom
-        
-        // 通知房间状态更新
-        NotificationCenter.default.post(
-            name: .roomUpdated,
-            object: nil,
-            userInfo: ["roomId": roomId, "room": updatedRoom]
-        )
-        
-        // 有一定概率（30%）在短暂延迟后继续添加新玩家
-        if Double.random(in: 0...1) < 0.3 {
-            let remainingPlayers = mockPlayers.filter { mockPlayer in
-                !updatedRoom.players.contains { $0.id == mockPlayer.id }
-            }
-            
-            if let nextPlayer = remainingPlayers.first {
-                // 1-5秒的随机延迟
-                let randomDelay = Double.random(in: 1...5)
-                DispatchQueue.main.asyncAfter(deadline: .now() + randomDelay) { [weak self] in
-                    self?.trySimulatePlayerJoining(roomId: roomId, player: nextPlayer)
-                }
-            }
+    // MARK: - 游戏状态同步
+    
+    func startGame(room: Room) {
+        do {
+            let roomData = try encoder.encode(room)
+            let message = NetworkMessage(type: .gameStart, data: roomData)
+            let messageData = try encoder.encode(message)
+            try session.send(messageData, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            print("Error starting game: \(error)")
         }
     }
     
-    // 更新房间信息
-    func updateRoom(_ room: Room) {
-        if let index = mockRooms.firstIndex(where: { $0.id == room.id }) {
-            mockRooms[index] = room
+    func reportPlayerCaught(playerId: String) {
+        do {
+            let caughtData = try encoder.encode(["playerId": playerId])
+            let message = NetworkMessage(type: .playerCaught, data: caughtData)
+            let messageData = try encoder.encode(message)
+            try session.send(messageData, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            print("Error reporting caught player: \(error)")
         }
     }
 }
 
-// 添加通知名称
+// MARK: - MCSessionDelegate
+extension NetworkManager: MCSessionDelegate {
+    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        DispatchQueue.main.async {
+            switch state {
+            case .connected:
+                if !self.connectedPeers.contains(peerID) {
+                    self.connectedPeers.append(peerID)
+                }
+            case .notConnected:
+                self.connectedPeers.removeAll { $0 == peerID }
+            case .connecting:
+                break
+            @unknown default:
+                break
+            }
+        }
+    }
+    
+    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        do {
+            let message = try decoder.decode(NetworkMessage.self, from: data)
+            DispatchQueue.main.async {
+                self.handleReceivedMessage(message, from: peerID)
+            }
+        } catch {
+            print("Error decoding received data: \(error)")
+        }
+    }
+    
+    private func handleReceivedMessage(_ message: NetworkMessage, from peer: MCPeerID) {
+        do {
+            switch message.type {
+            case .playerInfo:
+                let player = try decoder.decode(Player.self, from: message.data)
+                NotificationCenter.default.post(
+                    name: .playerInfoUpdated,
+                    object: nil,
+                    userInfo: ["player": player]
+                )
+                
+            case .location:
+                let locationInfo = try decoder.decode([String: Any].self, from: message.data) as! [String: Any]
+                if let playerId = locationInfo["playerId"] as? String,
+                   let lat = locationInfo["lat"] as? Double,
+                   let lon = locationInfo["lon"] as? Double {
+                    let location = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                    NotificationCenter.default.post(
+                        name: .playerLocationUpdated,
+                        object: nil,
+                        userInfo: ["playerId": playerId, "location": location]
+                    )
+                }
+                
+            case .roomUpdate:
+                let room = try decoder.decode(Room.self, from: message.data)
+                NotificationCenter.default.post(
+                    name: .roomUpdated,
+                    object: nil,
+                    userInfo: ["room": room]
+                )
+                
+            case .gameStart:
+                let room = try decoder.decode(Room.self, from: message.data)
+                NotificationCenter.default.post(
+                    name: .gameStarted,
+                    object: nil,
+                    userInfo: ["room": room]
+                )
+                
+            case .playerCaught:
+                let caughtInfo = try decoder.decode([String: String].self, from: message.data)
+                if let playerId = caughtInfo["playerId"] {
+                    NotificationCenter.default.post(
+                        name: .playerCaught,
+                        object: nil,
+                        userInfo: ["playerId": playerId]
+                    )
+                }
+            }
+        } catch {
+            print("Error handling message: \(error)")
+        }
+    }
+    
+    // 必须实现的其他 MCSessionDelegate 方法
+    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
+    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
+    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+}
+
+// MARK: - MCNearbyServiceAdvertiserDelegate
+extension NetworkManager: MCNearbyServiceAdvertiserDelegate {
+    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+        // 自动接受连接请求
+        invitationHandler(true, session)
+    }
+}
+
+// MARK: - MCNearbyServiceBrowserDelegate
+extension NetworkManager: MCNearbyServiceBrowserDelegate {
+    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
+        // 自动发起连接请求
+        browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
+    }
+    
+    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+        // 处理失去连接的peer
+        DispatchQueue.main.async {
+            self.connectedPeers.removeAll { $0 == peerID }
+        }
+    }
+}
+
+// MARK: - Notification Names
 extension Notification.Name {
+    static let playerInfoUpdated = Notification.Name("playerInfoUpdated")
+    static let playerLocationUpdated = Notification.Name("playerLocationUpdated")
     static let roomUpdated = Notification.Name("roomUpdated")
+    static let gameStarted = Notification.Name("gameStarted")
+    static let playerCaught = Notification.Name("playerCaught")
 }
