@@ -38,7 +38,15 @@ class RoomViewModel: ObservableObject {
     }
     
     func createPlayer(name: String, isHost: Bool) {
-        currentPlayer = Player(name: name, isHost: isHost)
+        // 如果已经有玩家对象，更新其身份
+        if currentPlayer != nil {
+            currentPlayer = Player(name: currentPlayer!.name, isHost: isHost)
+        } else {
+            // 创建新玩家
+            currentPlayer = Player(name: name, isHost: isHost)
+        }
+        
+        // 如果是房主，创建新房间
         if isHost {
             createRoom()
         }
@@ -107,7 +115,6 @@ class RoomViewModel: ObservableObject {
     
     func leaveRoom() {
         if let player = currentPlayer {
-            // 从房间中移除当前玩家
             players.removeAll(where: { $0.id == player.id })
             
             if player.isHost {
@@ -115,25 +122,24 @@ class RoomViewModel: ObservableObject {
                     // 房主解散房间时，通知所有玩家退出
                     for player in room.players {
                         if !player.isHost {
-                            // 其他玩家退出房间
                             players.removeAll(where: { $0.id == player.id })
                         }
                     }
-                    // 删除房间
                     networkManager.removeRoom(roomId:room.id)
                 }
-                currentRoom = nil
             } else if let room = currentRoom {
                 // 普通玩家退出，更新房间信息
                 var updatedRoom = room
                 updatedRoom.players = players
                 networkManager.updateRoom(updatedRoom)
             }
+            
+            // 清理房间相关信息，保留玩家基本信息
+            currentRoom = nil
+            roomId = ""
+            // 重置玩家角色为默认值
+            currentPlayer?.role = .runner
         }
-        
-        // 清理当前玩家对象和房间ID
-        currentPlayer = nil
-        roomId = ""
     }
     
     func kickPlayer(player: Player) {
