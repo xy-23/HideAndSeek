@@ -64,12 +64,14 @@ class RoomViewModel: ObservableObject {
         String(format: "%06d", Int.random(in: 100000...999999))
     }
     
-    func createRoom() {
+    func createRoom(maxPlayers: Int = 8, duration: TimeInterval = 300) {
         guard let host = currentPlayer else { return }
         let newRoom = Room(
             id: generateRoomId(),
             host: host,
             players: [host],
+            maxPlayers: maxPlayers,
+            gameDuration: duration,
             gameStatus: .waiting
         )
         currentRoom = newRoom
@@ -140,7 +142,7 @@ class RoomViewModel: ObservableObject {
                 networkManager.updateRoom(updatedRoom)
             }
             
-            // 清理房间相关信息，保留玩家基本信息
+            // 清理房间相关信息，保��玩家基本信息
             currentRoom = nil
             roomId = ""
             // 重置玩家角色为默认值
@@ -160,11 +162,6 @@ class RoomViewModel: ObservableObject {
             updatedRoom.players = players
             networkManager.updateRoom(updatedRoom)
         }
-    }
-
-    func updateGameSettings(maxPlayers: Int, duration: TimeInterval) {
-        currentRoom?.maxPlayers = maxPlayers
-        currentRoom?.gameDuration = duration
     }
     
     func startGame() {

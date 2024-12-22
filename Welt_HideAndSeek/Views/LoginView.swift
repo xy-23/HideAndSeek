@@ -103,12 +103,10 @@ struct LoginView: View {
                         showCreateGameDialog = false
                     }
                 
-                CreateGameDialogView(
-                    isPresented: $showCreateGameDialog,
-                    maxPlayers: $maxPlayers,
-                    gameDuration: $gameDuration,
-                    onCreate: createGame
-                )
+                CreateGameDialog(isPresented: $showCreateGameDialog) { maxPlayers, duration in
+                    roomViewModel.createPlayer(name: playerName, isHost: true)
+                    roomViewModel.createRoom(maxPlayers: maxPlayers, duration: duration)
+                }
             }
             
             if showJoinGameDialog {
@@ -184,106 +182,46 @@ struct CustomTextFieldStyle: TextFieldStyle {
 }
 
 // 创建游戏对话框视图
-struct CreateGameDialogView: View {
+struct CreateGameDialog: View {
     @Binding var isPresented: Bool
-    @Binding var maxPlayers: String
-    @Binding var gameDuration: String
-    let onCreate: () -> Void
-    
-    // 添加用于滑块的状态变量
-    @State private var playersCount: Double = 4  // 默认4人
-    @State private var durationMinutes: Double = 5  // 默认5分钟
+    @State private var maxPlayers: String = "4"
+    @State private var gameDuration: String = "5"  // 默认5分钟
+    let onCreate: (Int, TimeInterval) -> Void
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("创建游戏")
-                .font(.headline)
-                .padding(.top)
+            Text("创建房间")
+                .font(.title2)
+                .bold()
             
-            VStack(alignment: .leading, spacing: 20) {
-                // 游戏人数滑块
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("游戏人数:")
-                            .foregroundColor(.gray)
-                        Spacer()
-                        Text("\(Int(playersCount))人")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
-                    
-                    Slider(value: $playersCount, in: 2...10, step: 1)
-                        .accentColor(.blue)
-                        .onChange(of: playersCount) { newValue in
-                            maxPlayers = String(Int(newValue))
-                        }
-                    
-                    Text("可选范围：2-10人")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                
-                // 游戏时长滑块
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("游戏时长:")
-                            .foregroundColor(.gray)
-                        Spacer()
-                        Text("\(Int(durationMinutes))分钟")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
-                    
-                    Slider(value: $durationMinutes, in: 1...30, step: 1)
-                        .accentColor(.blue)
-                        .onChange(of: durationMinutes) { newValue in
-                            gameDuration = String(Int(newValue))
-                        }
-                    
-                    Text("可选范围：1-30分钟")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.vertical)
+            TextField("最大玩家数 (2-8)", text: $maxPlayers)
+                .keyboardType(.numberPad)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            
+            TextField("游戏时长 (分钟)", text: $gameDuration)
+                .keyboardType(.numberPad)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
             
             HStack(spacing: 20) {
                 Button("取消") {
                     isPresented = false
                 }
                 .foregroundColor(.red)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.red.opacity(0.1))
-                .cornerRadius(12)
                 
                 Button("创建") {
-                    maxPlayers = String(Int(playersCount))
-                    gameDuration = String(Int(durationMinutes))
-                    onCreate()
-                    isPresented = false
+                    if let maxP = Int(maxPlayers),
+                       let duration = Double(gameDuration) {
+                        onCreate(maxP, duration * 60)  // 转换为秒
+                        isPresented = false
+                    }
                 }
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(12)
+                .foregroundColor(.blue)
             }
         }
         .padding()
         .background(Color.white)
-        .cornerRadius(20)
-        .shadow(radius: 20)
-        .padding(.horizontal, 40)
-        .onAppear {
-            // 初始化滑块值
-            if let players = Int(maxPlayers) {
-                playersCount = Double(players)
-            }
-            if let duration = Int(gameDuration) {
-                durationMinutes = Double(duration)
-            }
-        }
+        .cornerRadius(15)
+        .shadow(radius: 10)
     }
 }
 
