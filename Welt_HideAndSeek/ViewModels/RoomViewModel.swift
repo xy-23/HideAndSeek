@@ -70,8 +70,6 @@ class RoomViewModel: ObservableObject {
             id: generateRoomId(),
             host: host,
             players: [host],
-            maxPlayers: 8,
-            gameDuration: 300,
             gameStatus: .waiting
         )
         currentRoom = newRoom
@@ -162,6 +160,11 @@ class RoomViewModel: ObservableObject {
             updatedRoom.players = players
             networkManager.updateRoom(updatedRoom)
         }
+    }
+
+    func updateGameSettings(maxPlayers: Int, duration: TimeInterval) {
+        currentRoom?.maxPlayers = maxPlayers
+        currentRoom?.gameDuration = duration
     }
     
     func startGame() {
