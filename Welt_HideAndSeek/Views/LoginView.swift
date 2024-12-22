@@ -178,41 +178,81 @@ struct CustomTextFieldStyle: TextFieldStyle {
 // 创建游戏对话框视图
 struct CreateGameDialog: View {
     @Binding var isPresented: Bool
-    @State private var maxPlayers: String = "4"
-    @State private var gameDuration: String = "5"  // 默认5分钟
+    @State private var maxPlayers: Double = 4
+    @State private var gameDuration: Double = 5
     let onCreate: (Int, TimeInterval) -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 25) {
+            // 标题
             Text("创建房间")
                 .font(.title2)
                 .bold()
             
-            TextField("最大玩家数 (2-8)", text: $maxPlayers)
-                .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            TextField("游戏时长 (分钟)", text: $gameDuration)
-                .keyboardType(.numberPad)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-            
-            HStack(spacing: 20) {
-                Button("取消") {
-                    isPresented = false
+            // 最大玩家数设置
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("最大玩家数：")
+                        .foregroundColor(.gray)
+                    Text("\(Int(maxPlayers))人")
+                        .bold()
+                        .foregroundColor(.blue)
                 }
-                .foregroundColor(.red)
                 
-                Button("创建") {
-                    if let maxP = Int(maxPlayers),
-                       let duration = Double(gameDuration) {
-                        onCreate(maxP, duration * 60)  // 转换为秒
-                        isPresented = false
-                    }
+                Slider(value: $maxPlayers, in: 2...8, step: 1)
+                    .accentColor(.blue)
+                
+                Text("可容纳2-8名玩家")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            
+            // 游戏时长设置
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("游戏时长：")
+                        .foregroundColor(.gray)
+                    Text("\(Int(gameDuration))分钟")
+                        .bold()
+                        .foregroundColor(.blue)
                 }
-                .foregroundColor(.blue)
+                
+                Slider(value: $gameDuration, in: 3...10, step: 1)
+                    .accentColor(.blue)
+                
+                Text("建议3-10分钟，时间越长躲藏范围越大")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            
+            // 按钮组
+            HStack(spacing: 20) {
+                Button(action: {
+                    isPresented = false
+                }) {
+                    Text("取消")
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 10)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                }
+                
+                Button(action: {
+                    onCreate(Int(maxPlayers), TimeInterval(gameDuration * 60))
+                    isPresented = false
+                }) {
+                    Text("创建")
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 10)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                }
             }
         }
         .padding()
+        .frame(width: 300)
         .background(Color.white)
         .cornerRadius(15)
         .shadow(radius: 10)

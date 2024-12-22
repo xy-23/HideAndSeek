@@ -107,21 +107,28 @@ class NetworkManager: ObservableObject {
         
         // 模拟延迟后玩家陆续加入
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.simulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[0])
+            self?.trySimulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[0])
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
-            self?.simulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[1])
+            self?.trySimulatePlayerJoining(roomId: room.id, player: self?.mockPlayers[1])
         }
     }
     
-    // 模拟玩家加入房间
-    private func simulatePlayerJoining(roomId: String, player: Player?) {
+    // 尝试模拟玩家加入房间
+    private func trySimulatePlayerJoining(roomId: String, player: Player?) {
         guard let player = player,
               let index = mockRooms.firstIndex(where: { $0.id == roomId }) else { return }
         
+        // 检查房间是否有空位
+        let room = mockRooms[index]
+        guard room.players.count < room.maxPlayers else { return }
+        
+        // 检查房间状态
+        guard room.gameStatus == .waiting else { return }
+        
         // 更新房间玩家列表
-        var updatedRoom = mockRooms[index]
+        var updatedRoom = room
         updatedRoom.players.append(player)
         mockRooms[index] = updatedRoom
         
