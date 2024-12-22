@@ -10,8 +10,14 @@ import CoreLocation
 
 @main
 struct Welt_HideAndSeekApp: App {
-    @StateObject private var roomViewModel = RoomViewModel()
-    @StateObject private var gameViewModel = GameViewModel()
+    @StateObject private var gameViewModel: GameViewModel
+    @StateObject private var roomViewModel: RoomViewModel
+    
+    init() {
+        let gameVM = GameViewModel()
+        _gameViewModel = StateObject(wrappedValue: gameVM)
+        _roomViewModel = StateObject(wrappedValue: RoomViewModel(gameViewModel: gameVM))
+    }
     
     var body: some Scene {
         WindowGroup {
