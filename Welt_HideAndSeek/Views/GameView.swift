@@ -59,9 +59,10 @@ struct GameView: View {
                     
                     Spacer()
                     
-                    // 玩家角色信息
-                    if let currentPlayer = roomViewModel.currentPlayer {
-                        PlayerRoleTag(player: currentPlayer)
+                    // 修改玩家角色信息部分
+                    if let currentPlayer = roomViewModel.currentPlayer,
+                       let gamePlayer = gameViewModel.currentPlayers.first(where: { $0.id == currentPlayer.id }) {
+                        PlayerRoleTag(player: gamePlayer)
                             .padding(.bottom)
                     }
                 }
