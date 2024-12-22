@@ -13,52 +13,89 @@ struct LoginView: View {
     @State private var gameDuration: String = "5"
     @State private var roomId: String = ""
     
-    // 在 LoginView 中添加新的状态变量
-    @State private var showEmptyNameAlert = false  // 控制名字为空提示的显示
+    @State private var showEmptyNameAlert = false
     
     var body: some View {
         ZStack {
-            VStack(spacing: 20) {
-                // 玩家名称输入
-                TextField("输入你的名字", text: $playerName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
+            // 背景渐变
+            LinearGradient(
+                gradient: Gradient(colors: [.blue.opacity(0.2), .purple.opacity(0.2)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                // 标题
+                Text("捉迷藏")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundColor(.primary)
+                    .padding(.top, 50)
                 
-                // 创建游戏按钮
-                Button(action: {
-                    if playerName.isEmpty {
-                        showEmptyNameAlert = true
-                    } else {
-                        showCreateGameDialog = true
+                // 输入区域
+                VStack(spacing: 25) {
+                    // 玩家名称输入
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("玩家名称")
+                            .foregroundColor(.gray)
+                            .font(.headline)
+                        
+                        TextField("请输入您的名字", text: $playerName)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .autocapitalization(.none)
                     }
-                }) {
-                    Text("创建游戏")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    
+                    // 按钮组
+                    VStack(spacing: 15) {
+                        // 创建游戏按钮
+                        Button(action: {
+                            if playerName.isEmpty {
+                                showEmptyNameAlert = true
+                            } else {
+                                showCreateGameDialog = true
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("创建游戏")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                            .shadow(radius: 5)
+                        }
+                        
+                        // 加入游戏按钮
+                        Button(action: {
+                            if playerName.isEmpty {
+                                showEmptyNameAlert = true
+                            } else {
+                                showJoinGameDialog = true
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "person.2.fill")
+                                Text("加入游戏")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                            .shadow(radius: 5)
+                        }
+                    }
                 }
+                .padding(.horizontal)
+                .padding(.top, 30)
                 
-                // 加入游戏按钮
-                Button(action: {
-                    if playerName.isEmpty {
-                        showEmptyNameAlert = true
-                    } else {
-                        showJoinGameDialog = true
-                    }
-                }) {
-                    Text("加入游戏")
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
+                Spacer()
             }
             .padding()
             
-            // 创建游戏对话框
+            // 对话框
             if showCreateGameDialog {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
@@ -74,7 +111,6 @@ struct LoginView: View {
                 )
             }
             
-            // 加入游戏对话框
             if showJoinGameDialog {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
@@ -89,17 +125,15 @@ struct LoginView: View {
                 )
             }
         }
-        // 错误提示对话框
-        .alert("错误", isPresented: $roomViewModel.showError) {
-            Button("确定", role: .cancel) {}
-        } message: {
-            Text(roomViewModel.errorMessage)
-        }
-        // 在 ZStack 闭合前添加名字为空的提示对话框
         .alert("提示", isPresented: $showEmptyNameAlert) {
             Button("确定", role: .cancel) {}
         } message: {
             Text("请输入您的名字")
+        }
+        .alert("错误", isPresented: $roomViewModel.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(roomViewModel.errorMessage)
         }
     }
     
@@ -124,7 +158,6 @@ struct LoginView: View {
         }
     }
     
-    // 加入游戏方法
     private func joinGame() {
         guard !roomId.isEmpty else {
             roomViewModel.errorMessage = "请输入房间ID"
@@ -134,6 +167,19 @@ struct LoginView: View {
         
         roomViewModel.createPlayer(name: playerName, isHost: false)
         roomViewModel.joinRoom(roomId: roomId)
+    }
+}
+
+// 自定义文本框样式
+struct CustomTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white)
+                    .shadow(color: .gray.opacity(0.2), radius: 5)
+            )
     }
 }
 
@@ -148,19 +194,24 @@ struct CreateGameDialogView: View {
         VStack(spacing: 20) {
             Text("创建游戏")
                 .font(.headline)
+                .padding(.top)
             
-            VStack(alignment: .leading, spacing: 10) {
-                Text("游戏人数:")
-                    .foregroundColor(.gray)
-                TextField("2-10人", text: $maxPlayers)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.numberPad)
+            VStack(alignment: .leading, spacing: 15) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("游戏人数:")
+                        .foregroundColor(.gray)
+                    TextField("2-10人", text: $maxPlayers)
+                        .textFieldStyle(CustomTextFieldStyle())
+                        .keyboardType(.numberPad)
+                }
                 
-                Text("游戏时长:")
-                    .foregroundColor(.gray)
-                TextField("分钟", text: $gameDuration)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.numberPad)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("游戏时长:")
+                        .foregroundColor(.gray)
+                    TextField("分钟", text: $gameDuration)
+                        .textFieldStyle(CustomTextFieldStyle())
+                        .keyboardType(.numberPad)
+                }
             }
             
             HStack(spacing: 20) {
@@ -168,18 +219,26 @@ struct CreateGameDialogView: View {
                     isPresented = false
                 }
                 .foregroundColor(.red)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(12)
                 
                 Button("创建") {
                     onCreate()
                     isPresented = false
                 }
-                .foregroundColor(.blue)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .cornerRadius(12)
             }
         }
         .padding()
         .background(Color.white)
-        .cornerRadius(12)
-        .shadow(radius: 10)
+        .cornerRadius(20)
+        .shadow(radius: 20)
         .padding(.horizontal, 40)
     }
 }
@@ -194,12 +253,13 @@ struct JoinGameDialogView: View {
         VStack(spacing: 20) {
             Text("加入游戏")
                 .font(.headline)
+                .padding(.top)
             
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("房间ID:")
                     .foregroundColor(.gray)
                 TextField("请输入房间ID", text: $roomId)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textFieldStyle(CustomTextFieldStyle())
             }
             
             HStack(spacing: 20) {
@@ -207,18 +267,26 @@ struct JoinGameDialogView: View {
                     isPresented = false
                 }
                 .foregroundColor(.red)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(12)
                 
                 Button("加入") {
                     onJoin()
                     isPresented = false
                 }
-                .foregroundColor(.blue)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.green)
+                .cornerRadius(12)
             }
         }
         .padding()
         .background(Color.white)
-        .cornerRadius(12)
-        .shadow(radius: 10)
+        .cornerRadius(20)
+        .shadow(radius: 20)
         .padding(.horizontal, 40)
     }
 }

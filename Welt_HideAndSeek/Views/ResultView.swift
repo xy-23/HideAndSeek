@@ -6,34 +6,118 @@ struct ResultView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text(gameViewModel.gameResult == .seekerWin ? "抓捕者胜利！" : "逃跑者胜利！")
-                .font(.title)
-                .padding()
+        ZStack {
+            // 背景渐变
+            LinearGradient(
+                gradient: Gradient(colors: [.blue.opacity(0.3), .purple.opacity(0.3)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            // 游戏统计信息
-            VStack(alignment: .leading, spacing: 10) {
-                Text("游戏时长: \(Int(gameViewModel.gameTimeRemaining))秒")
-                Text("被抓获玩家: \(gameViewModel.caughtPlayers.count)人")
-                Text("存活玩家: \(roomViewModel.players.count - gameViewModel.caughtPlayers.count)人")
-            }
-            .padding()
-            
-            Button("返回房间") {
-                // 重置游戏状态
-                gameViewModel.resetGame()
-                roomViewModel.currentRoom?.gameStatus = .waiting
-                for i in 0..<roomViewModel.players.count {
-                    roomViewModel.players[i].isReady = false
+            VStack(spacing: 30) {
+                // 结果标题
+                VStack(spacing: 15) {
+                    Image(systemName: gameViewModel.gameResult == .seekerWin ? "flag.fill" : "figure.run")
+                        .font(.system(size: 60))
+                        .foregroundColor(gameViewModel.gameResult == .seekerWin ? .red : .green)
+                    
+                    Text(gameViewModel.gameResult == .seekerWin ? "抓捕者胜利！" : "逃跑者胜利！")
+                        .font(.title)
+                        .bold()
+                        .foregroundColor(.primary)
                 }
-                dismiss()
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.9))
+                        .shadow(radius: 10)
+                )
+                
+                // 游戏统计信息
+                VStack(alignment: .leading, spacing: 15) {
+                    StatisticRow(
+                        icon: "clock.fill",
+                        title: "游戏时长",
+                        value: "\(Int(gameViewModel.gameTimeRemaining))秒",
+                        color: .blue
+                    )
+                    
+                    StatisticRow(
+                        icon: "person.fill.xmark",
+                        title: "被抓获玩家",
+                        value: "\(gameViewModel.caughtPlayers.count)人",
+                        color: .red
+                    )
+                    
+                    StatisticRow(
+                        icon: "person.fill.checkmark",
+                        title: "存活玩家",
+                        value: "\(roomViewModel.players.count - gameViewModel.caughtPlayers.count)人",
+                        color: .green
+                    )
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.9))
+                        .shadow(radius: 10)
+                )
+                
+                // 返回按钮
+                Button(action: {
+                    // 重置游戏状态
+                    gameViewModel.resetGame()
+                    roomViewModel.currentRoom?.gameStatus = .waiting
+                    for i in 0..<roomViewModel.players.count {
+                        roomViewModel.players[i].isReady = false
+                    }
+                    dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.left")
+                        Text("返回房间")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.blue)
+                            .shadow(radius: 5)
+                    )
+                }
+                .padding(.horizontal)
             }
             .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
         }
-        .padding()
+    }
+}
+
+// 统计信息行视图
+struct StatisticRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.title2)
+                .frame(width: 30)
+            
+            Text(title)
+                .foregroundColor(.gray)
+            
+            Spacer()
+            
+            Text(value)
+                .bold()
+                .foregroundColor(.primary)
+        }
     }
 }
 
