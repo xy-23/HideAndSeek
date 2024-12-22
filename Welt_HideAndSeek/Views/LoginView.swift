@@ -9,7 +9,7 @@ struct LoginView: View {
     @State private var showJoinGameDialog = false
     
     // 游戏设置
-    @State private var maxPlayers: String = "8"
+    @State private var maxPlayers: String = "4"
     @State private var gameDuration: String = "5"
     @State private var roomId: String = ""
     
@@ -190,6 +190,23 @@ struct CreateGameDialogView: View {
     @Binding var gameDuration: String
     let onCreate: () -> Void
     
+    // 添加验证和格式化方法
+    private func validateAndFormatMaxPlayers(_ input: String) {
+        if let value = Int(input) {
+            maxPlayers = String(min(10, max(2, value)))  // 限制在2-10之间
+        } else if input.isEmpty {
+            maxPlayers = "4"  // 为空时设为默认值
+        }
+    }
+    
+    private func validateAndFormatDuration(_ input: String) {
+        if let value = Int(input) {
+            gameDuration = String(min(30, max(1, value)))  // 限制在1-30之间
+        } else if input.isEmpty {
+            gameDuration = "5"  // 为空时设为默认值
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("创建游戏")
@@ -203,6 +220,12 @@ struct CreateGameDialogView: View {
                     TextField("2-10人", text: $maxPlayers)
                         .textFieldStyle(CustomTextFieldStyle())
                         .keyboardType(.numberPad)
+                        .onChange(of: maxPlayers) { newValue in
+                            validateAndFormatMaxPlayers(newValue)
+                        }
+                    Text("可选范围：2-10人")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
@@ -211,6 +234,12 @@ struct CreateGameDialogView: View {
                     TextField("分钟", text: $gameDuration)
                         .textFieldStyle(CustomTextFieldStyle())
                         .keyboardType(.numberPad)
+                        .onChange(of: gameDuration) { newValue in
+                            validateAndFormatDuration(newValue)
+                        }
+                    Text("可选范围：1-30分钟")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
             }
             
