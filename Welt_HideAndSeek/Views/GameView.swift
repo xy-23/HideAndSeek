@@ -19,7 +19,6 @@ struct GameView: View {
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
-                // 游戏信息显示在地图上方
                 Text("剩余时间: \(Int(gameViewModel.gameTimeRemaining))秒")
                     .padding()
                     .background(Color.white.opacity(0.8))
@@ -38,16 +37,17 @@ struct GameView: View {
         .onDisappear {
             locationManager.stopUpdatingLocation()
         }
-        .onChange(of: locationManager.location) { newLocation in
-            if let location = newLocation {
+        .onChange(of: locationManager.location) { location in
+            if let newLocation = location {
                 withAnimation {
-                    region.center = location
+                    region.center = newLocation
                 }
                 
-                // 更新游戏中的位置信息
                 if let playerId = roomViewModel.currentPlayer?.id {
-                    gameViewModel.updateLocation(playerId: playerId, 
-                                              location: location)
+                    gameViewModel.updateLocation(
+                        playerId: playerId,
+                        location: newLocation
+                    )
                 }
             }
         }
