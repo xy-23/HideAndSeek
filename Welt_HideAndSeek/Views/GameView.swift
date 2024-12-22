@@ -152,22 +152,19 @@ struct GameView: View {
         )
     }
     
-    // 新增一个辅助方法来获取角色信息
+    // 修改 getRoleInfo 方法
     private func getRoleInfo(_ player: Player) -> (icon: String, color: Color, text: String) {
-        // 确保我们使用的是当前玩家的实际角色
-        if let currentPlayer = roomViewModel.currentPlayer {
-            if gameViewModel.caughtPlayers.contains(currentPlayer.id) {
-                return ("xmark.circle.fill", .gray, "已被抓获")
-            } else {
-                switch currentPlayer.role {
-                case .seeker:
-                    return ("eye.fill", .red, "追捕者")
-                case .runner:
-                    return ("figure.run", .green, "逃跑者")
-                }
+        // 直接使用传入的 player 参数来判断角色，而不是重新获取 currentPlayer
+        if gameViewModel.caughtPlayers.contains(player.id) {
+            return ("xmark.circle.fill", .gray, "已被抓获")
+        } else {
+            switch player.role {
+            case .seeker:
+                return ("eye.fill", .red, "追捕者")
+            case .runner:
+                return ("figure.run", .green, "逃跑者")
             }
         }
-        return ("figure.run", .green, "逃跑者") // 默认值
     }
 }
 
